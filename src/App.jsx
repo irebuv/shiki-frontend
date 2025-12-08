@@ -1,34 +1,28 @@
-import { useEffect, useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
 import './App.css';
-import api from './api/axios';
-
+import {useLocation, useNavigate, useRoutes} from "react-router-dom";
+import { appRoutes } from './routes/appRoutes';
+import { toast, Toaster } from './components/custom/sonner';
+import { useEffect, useRef } from 'react';
+console.log("BUILD FROM:", new Date().toISOString());
 function App() {
-    const [count, setCount] = useState(0);
+    const element = useRoutes(appRoutes);
+    const location = useLocation();
+    const navigate = useNavigate();
+    const toastShownRef = useRef(false);
+
     useEffect(() => {
-        api.get('/test')
-            .then((res) => console.log(res.data))
-            .catch((err) => console.error(err));
-    }, []);
+        if(location.state?.toastMessage && !toastShownRef.current){
+            toastShownRef.current = true;
+            toast.error(location.state.toastMessage);
+
+            navigate(location.pathname, {replace: true, state: {}});
+        }
+    }, [location, navigate]);
+
     return (
         <>
-            <div>
-                <a href="https://vite.dev" target="_blank">
-                    <img src={viteLogo} className="logo" alt="Vite logo" />
-                </a>
-                <a href="https://react.dev" target="_blank">
-                    <img src={reactLogo} className="logo react" alt="React logo" />
-                </a>
-            </div>
-            <h1>Vite + React</h1>
-            <div className="card">
-                <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-                <p>
-                    Edit <code>src/App.jsx</code> and save to test HMR
-                </p>
-            </div>
-            <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
+           {element}
+           <Toaster/>
         </>
     );
 }
