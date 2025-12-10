@@ -1,5 +1,11 @@
 $primary: #4f46e5;
 
 body {
-  background: $primary;
+  color: var(--color-chart-2) !important;;
+}
+.test-box {
+  padding: 1rem;
+  background-color: var(--chart-1);
+  border: 1px solid var(--chart-2);
+  color: var(--chart-3);
 }

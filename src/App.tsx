@@ -1,4 +1,3 @@
-import './App.css';
 import {useLocation, useNavigate, useRoutes} from "react-router-dom";
 import { appRoutes } from './routes/appRoutes';
 import { toast, Toaster } from './components/custom/sonner';

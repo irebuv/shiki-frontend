@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import api from '@/api/axios';
 import { toast } from '@/components/custom/sonner';
+import MainLayout from '@/components/layout/MainLayout';
+import api from '@/api/axios';
 
 export default function Home() {
     const [count, setCount] = useState(0);
@@ -25,9 +26,9 @@ export default function Home() {
             });
     }, [apiUrl]);
     return (
-        <>
+        <MainLayout>
             <h1>Vite + React</h1>
-            <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+            <div className="flex items-center justify-center bg-slate-900 text-white">
                 <div className="space-y-3 text-center">
                     <h1 className="text-3xl font-bold">Frontend ↔ Backend test</h1>
 
@@ -52,10 +53,10 @@ export default function Home() {
                     Edit <code>src/App.jsx</code> and save to test HMR
                 </p>
             </div>
-            <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+            <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
                 <h1 className="text-3xl font-bold">Hello Tailwind v4</h1>
             </div>
             <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-        </>
+        </MainLayout>
     );
 }
