@@ -5,19 +5,34 @@ import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
 import { div } from 'framer-motion/client';
 import { Link } from 'react-router-dom';
+import MenuHeader from './MenuHeader';
 
 type NavLinks = {
     title: string;
     href: string;
 };
 export default function Header() {
-    const { theme, toggleTheme } = useAppTheme();
+    const { toggleTheme, resolvedTheme } = useAppTheme();
     const { user, loading } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const linksNav: NavLinks[] = [
         {
             title: 'Home',
             href: '/',
+        },
+        {
+            title: 'Anime',
+            href: '/anime',
+        },
+    ];
+    const linksProfile: NavLinks[] = [
+        {
+            title: 'Home',
+            href: '/',
+        },
+        {
+            title: 'admin',
+            href: '/admin',
         },
     ];
     useEffect(() => {
@@ -38,22 +53,29 @@ export default function Header() {
                     ? '0px 4px 6px rgba(122,122,122,0.3)'
                     : '0px 0px 0px rgba(0,0,0,0)',
             }}
-            className="sticky top-0 left-0 z-40 w-full bg-black p-2"
+            className="sticky top-0 left-0 z-40 w-full bg-secondary p-2"
         >
             <div className="flex justify-between items-center">
                 <Link to="/">
                     <Logo />
                 </Link>
+                <MenuHeader links={linksNav} />
                 <div className="test-box">jj</div>
-                <div className="bg-white">
-                    Header
+                <div>
                     <div className="flex items-center gap-2">
-                        <button onClick={toggleTheme} className="cursor-pointer">
-                            {theme === 'light' ? '🌞 Light' : '🌙 Dark'}
+                        <button
+                            onClick={(e) => toggleTheme(e)}
+                            className="rounded-md border px-3 py-2 cursor-pointer"
+                        >
+                            {resolvedTheme === 'dark' ? '🌙' : '☀️'}
                         </button>
                     </div>
                 </div>
-                {user ? <div>profile</div> : <Link to="/login">Login</Link>}
+                {user ? (
+                    <MenuHeader links={linksProfile} title={user.name} hasLogout={true} />
+                ) : (
+                    <Link to="/login">Login</Link>
+                )}
             </div>
         </motion.header>
     );

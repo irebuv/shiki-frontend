@@ -1,7 +1,9 @@
+
 $primary: #4f46e5;
 
 body {
-  color: var(--color-chart-2) !important;;
+  color: var(--color-chart-2) !important;
+    font-family: var(--font-sans);
 }
 .test-box {
   padding: 1rem;
