@@ -37,7 +37,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     if(last_page > 1) pages.push(last_page);
 
     return (
-        <div className='flex items-center gap-2 justify-center mt-6'>
+        <div className='flex items-center gap-2 justify-center'>
             <Button
                 variant='outline'
                 disabled={current_page <= 1}

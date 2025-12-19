@@ -2,20 +2,23 @@ import MainLayout from '@/components/layout/MainLayout';
 import { useQueryData } from '@/hooks/useQueryData';
 import { AnimeResponse } from '@/types/anime';
 import AnimeList from './component/AnimeList';
-import { Pagination } from '@/components/custom/pagination';
+import { Pagination } from '@/components/custom/Pagination';
+import AnimeFilters from './component/AnimeFilters';
 
 export default function Anime() {
-    const { data, setFilters } = useQueryData<AnimeResponse, { page: number }>({
+    const { data, filters, setFilters } = useQueryData<AnimeResponse, { page: number, sort: string, type: string }>({
         url: '/anime',
         initial: {
             page: 1,
+            sort: "updated_at:desc",
+            type: "",
         },
     });
-    console.log('anime', data);
+    console.log('anime', filters, data);
     return (
-        <MainLayout className="mx-auto flex flex-col gap-5 px-7">
+        <MainLayout className="mx-auto flex flex-col gap-5 px-7 mt-2">
             <div className={'grid grid-cols-5 gap-3'}>
-                <div>f</div>
+                <AnimeFilters filters={filters} setFilters={setFilters}  />
                 <div className={'col-span-4 mt-3'}>
                     <div className={'mb-5 grid grid-cols-3 items-center justify-between'}>
                         <div>Home / Anime</div>
