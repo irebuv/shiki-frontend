@@ -10,10 +10,28 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
     url,
     initial,
 }: UseQueryDataParams<TFilters>) {
+    const buildSearchParams = (paramsObj: Record<string, any>): URLSearchParams => {
+        const searchParams = new URLSearchParams();
+        Object.entries(paramsObj).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') return;
+            if (Array.isArray(value)) {
+                value.forEach((v) => searchParams.append(`${key}[]`, String(v)));
+            } else {
+                searchParams.append(key, String(value));
+            }
+        });
+        return searchParams;
+    };
+
     const [filters, setFiltersState] = useState<TFilters>(() => {
         const params = new URLSearchParams(window.location.search);
         const obj = { ...initial };
         Object.keys(initial).forEach((key) => {
+            const keyWithBrackets = `${key}[]`;
+            if (params.has(keyWithBrackets)) {
+                obj[key as keyof TFilters] = params.getAll(keyWithBrackets) as any;
+                return;
+            }
             const value = params.get(key);
             if (value !== null) obj[key as keyof TFilters] = value as any;
         });
@@ -26,10 +44,11 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
 
     const fetchData = useCallback(
         async (paramsObj: TFilters) => {
+            const searchParams = buildSearchParams(paramsObj);
             setLoading(true);
             try {
                 const response = await api.get<TData>(url, {
-                    params: paramsObj,
+                    params: searchParams,
                 });
                 setData(response.data);
                 setError(null);
@@ -47,13 +66,13 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
     }, [filters, fetchData]);
 
     const setFilters = (newValues: Partial<TFilters>) => {
-        const updated = {...filters, ...newValues};
-        if(!("page" in newValues)){
+        const updated = { ...filters, ...newValues };
+        if (!('page' in newValues)) {
             (updated as any).page = 1;
         }
         setFiltersState(updated);
-        const params = new URLSearchParams(updated as Record<string, string>);
-        window.history.pushState({}, "", `?${params.toString()}`);
+        const params = buildSearchParams(updated as Record<string, any>);
+        window.history.pushState({}, '', `?${params.toString()}`);
         fetchData(updated);
     };
 
@@ -62,16 +81,23 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
 
         const onPopState = () => {
             const params = new URLSearchParams(window.location.search);
-            const restoredFilters = {...initial};
+            const restoredFilters = { ...initial };
+
             Object.keys(initial).forEach((key) => {
+                const keyWithBrackets = `${key}[]`;
+                if (params.has(keyWithBrackets)) {
+                    restoredFilters[key as keyof TFilters] = params.getAll(keyWithBrackets) as any;
+                    return;
+                }
                 const value = params.get(key);
-                if (value !== null){
-                    restoredFilters[key as keyof TFilters] =value as any;
+                if (value !== null) {
+                    restoredFilters[key as keyof TFilters] = value as any;
                 }
             });
+
             setFiltersState(restoredFilters);
             fetchData(restoredFilters);
-        }
+        };
 
         window.addEventListener("popstate", onPopState);
         return () => window.removeEventListener("popstate", onPopState);

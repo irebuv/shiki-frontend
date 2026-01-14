@@ -11,7 +11,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
     logout: () => void;
 }
 
@@ -33,16 +33,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
 
-        api.defaults.headers.common["Authorization"];
+        // attach token to axios before checking session
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         api.get("/me")
-        .then(res => setUser(res.data))
-        .catch(() => localStorage.removeItem("token"))
-        .finally(() => setLoading(false));
+            .then(res => setUser(res.data))
+            .catch(() => {
+                localStorage.removeItem("token");
+                delete api.defaults.headers.common["Authorization"];
+            })
+            .finally(() => setLoading(false));
     }, []);
 
-    const login = async (email: string, password: string) => {
-        const res = await api.post("/login", {email, password});
+    const login = async (email: string, password: string, rememberMe = false) => {
+        const res = await api.post("/login", {email, password, rememberMe});
         const token = res.data.token;
         localStorage.setItem("token", token);
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;

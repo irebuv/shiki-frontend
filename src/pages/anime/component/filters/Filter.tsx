@@ -34,7 +34,7 @@ export default function Filter({ title, children, storageKey, defaultOpen = true
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 1 }}
                         transition={{ duration: 0.2 }}
-                        className="overflow-hidden px-4 pt-3"
+                        className="overflow-hidden pt-3"
                     >
                         {children}
                     </motion.div>

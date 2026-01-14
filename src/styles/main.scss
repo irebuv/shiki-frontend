@@ -1,10 +1,36 @@
+.current-filter {
+    label {
+        input {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--chart-2);
+            appearance: none;
+            cursor: pointer;
+            position: relative;
+
+            &:checked {
+                border: 2px solid var(--chart-1);
+
+                + span {
+                    color: var(--chart-1);
+                }
+            }
+
+            &:checked::before {
+                content: '\2713';
+                position: absolute;
+                top: 20%;
+                left: 60%;
+                transform: translate(-50%, -50%);
+                color: var(--chart-1);
+                font-size: 40px;
+            }
+        }
+    }
+}
 
 $primary: #4f46e5;
 
-body {
-  color: var(--color-chart-2) !important;
-    font-family: var(--font-sans);
-}
 .test-box {
   padding: 1rem;
   background-color: var(--chart-1);

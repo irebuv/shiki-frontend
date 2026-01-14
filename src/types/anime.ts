@@ -21,4 +21,7 @@ export interface AnimeResponse {
     anime: Anime[];
     pagination: Pagination;
     types: string[];
+    availableFilters:  Record<string, unknown>;
+    filters:  Record<string, unknown>;
+    filtersList:  Record<string, unknown>;
 }

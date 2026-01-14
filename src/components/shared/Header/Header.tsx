@@ -1,24 +1,26 @@
-import { useAppTheme } from '@/lib/theme/AppThemeProvider';
+
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
-import { div } from 'framer-motion/client';
 import { Link } from 'react-router-dom';
 import MenuHeader from './MenuHeader';
+import { Home, LucideProps } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
 
 type NavLinks = {
     title: string;
     href: string;
+    icon?: React.ComponentType<LucideProps>;
 };
 export default function Header() {
-    const { toggleTheme, resolvedTheme } = useAppTheme();
     const { user, loading } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const linksNav: NavLinks[] = [
         {
             title: 'Home',
             href: '/',
+            icon: Home,
         },
         {
             title: 'Anime',
@@ -60,17 +62,7 @@ export default function Header() {
                     <Logo />
                 </Link>
                 <MenuHeader links={linksNav} />
-                <div className="test-box">jj</div>
-                <div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={(e) => toggleTheme(e)}
-                            className="rounded-md border px-3 py-2 cursor-pointer"
-                        >
-                            {resolvedTheme === 'dark' ? '🌙' : '☀️'}
-                        </button>
-                    </div>
-                </div>
+               <ThemeToggle />
                 {user ? (
                     <MenuHeader links={linksProfile} title={user.name} hasLogout={true} />
                 ) : (

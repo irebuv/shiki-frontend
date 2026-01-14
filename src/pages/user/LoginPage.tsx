@@ -1,28 +1,39 @@
-import api from '@/api/axios';
 import { toast } from '@/components/custom/Sonner';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
+    const [rememberMe, setRememberMe] = useState<boolean>(() => {
+        const saved = localStorage.getItem('rememberMe');
+        return saved === 'true';
+    });
+    const { login } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const from = (location.state as { from?: string } | undefined)?.from ?? '/';
+
+    useEffect(() => {
+        localStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
+    }, [rememberMe]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await api.post('/login', { email, password, rememberMe });
-            localStorage.setItem('token', res.data.token);
+            await login(email, password, rememberMe);
             toast.success('Welcome!');
-            window.location.href = '/';
+            navigate(from, { replace: true });
         } catch (err) {
             console.error(err);
         }
     };
 
     return (
-        <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="flex flex-1 items-center justify-center w-full">
             <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-lg w-96">
-                <h1 className="text-2xl font-bold mb-6 text-center">Вход</h1>
+                <h1 className="text-2xl font-bold mb-6 text-center">Login in</h1>
                 <input
                     className="border w-full p-2 mb-3 rounded-md"
                     type="email"
@@ -33,7 +44,7 @@ const LoginPage = () => {
                 <input
                     className="border w-full p-2 mb-4 rounded-md"
                     type="password"
-                    placeholder="Пароль"
+                    placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
@@ -47,10 +58,10 @@ const LoginPage = () => {
                     &nbsp; Remember
                 </label>
                 <button
-                    className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+                    className="w-full bg-blue-600 text-white py-2 mt-3 rounded-md hover:bg-blue-700"
                     type="submit"
                 >
-                    Войти
+                    Enter
                 </button>
             </form>
         </div>

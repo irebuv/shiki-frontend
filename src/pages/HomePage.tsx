@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import MainLayout from '@/components/layout/MainLayout';
 
-export default function Home() {
+export default function HomePage() {
     const [count, setCount] = useState(0);
 
     return (
-        <MainLayout>
+        <div>
             <h1 className='font-sans'>Vite + React</h1>
             <div className="card">
                 <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
@@ -17,6 +16,6 @@ export default function Home() {
                 <h1 className="text-3xl font-bold">Hello Tailwind v4</h1>
             </div>
             <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-        </MainLayout>
+        </div>
     );
 }

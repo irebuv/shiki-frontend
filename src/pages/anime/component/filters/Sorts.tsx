@@ -17,7 +17,7 @@ const sortBy: { name: string; value: sortValue }[] = [
     { name: 'Popular', value: 'description' },
     { name: 'Rating', value: 'rating' },
     { name: 'Alphabet', value: 'name' },
-    { name: 'Random', value: 'random' },
+    { name: 'Today\'s random', value: 'random' },
 ];
 
 function parseSort(sort: sortParam): { by: sortValue; dir?: sortDirection } {
@@ -47,21 +47,21 @@ export default function Sorts({ setFilters, sort }: SortsProps) {
     }
 
     return (
-        <ul className={'mt-2'}>
+        <ul>
             {sortBy.map((el) => {
                 const isActive = current.by === el.value;
                 return (
                     <li
                         key={el.name}
-                        className={`p-1 hover:bg-input cursor-pointer rounded-md ${
-                            isActive ? 'bg-input' : ''
+                        className={`p-1 hover:bg-input cursor-pointer ${
+                            isActive ? 'bg-chart-2 text-chart-3' : ''
                         }`}
                         onClick={() => handleClick(el.value)}
                     >
                         {el.name}
 
                         {isActive && el.value !== 'random' && (
-                            <span className="ml-2 text-sm opacity-70">
+                            <span className="ml-2 opacity-70">
                                 {current.dir === 'asc' ? "↑" : "↓"}
                             </span>
                         )}

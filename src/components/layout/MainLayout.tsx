@@ -8,11 +8,14 @@ type AppLayoutProps = {
 
 export default function MainLayout({children, className}: AppLayoutProps) {
     return(
-        <div>
+        <div className="flex min-h-screen flex-col">
             <Header/>
-            <div className={className}>
+            <div className={`flex flex-1 min-h-full ${className}`}>
                 {children}
             </div>
+            <footer className="mt-auto text-center p-2">
+                2025
+            </footer>
         </div>
     )
 }

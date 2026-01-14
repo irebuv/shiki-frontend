@@ -19,10 +19,10 @@ export default function Kind() {
     ];
 
     return (
-        <ul className={'mt-2 cursor-pointer'}>
+        <ul>
             {sortBy.map((el) => {
                 return (
-                    <li key={el.name} className={`p-1 hover:bg-input `}>
+                    <li key={el.name} className={`p-1 hover:bg-input cursor-pointer`}>
                         {el.name}
                     </li>
                 );

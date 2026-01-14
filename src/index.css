@@ -1,7 +1,12 @@
 @import 'tailwindcss';
 @import '@radix-ui/themes/styles.css';
-@import url('https://fonts.googleapis.com/css2?family=Delius&display=swap');
-
+@font-face {
+    font-family: 'DeliusRegular';
+    src: url(assets/fonts/Delius-Regular.ttf);
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -45,12 +50,16 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
-
-    --font-sans: var(--font-primary);
+    /* Tailwind base (font-sans) pulls from this variable */
+    --font-sans: 'DeliusRegular', 'Delius', cursive, system-ui, sans-serif;
 }
 
 :root {
     --radius: 0.625rem;
+    /* Radix Themes uses this for its default font stack */
+    --default-font-family: 'DeliusRegular', 'Delius', cursive, system-ui, sans-serif;
+    /* Duplicate here so :root always has it even if @theme isn't applied */
+    --font-sans: 'DeliusRegular', 'Delius', cursive, system-ui, sans-serif;
 
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -80,8 +89,8 @@
     --ring: oklch(0.708 0 0);
 
     --chart-1: oklch(0.588 0.243 264.376);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-2: oklch(90.1% 0.058 230.902);
+    --chart-3: oklch(58.8% 0.158 241.966);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --chart-6: oklch(0.72 0.18 120);
@@ -97,8 +106,7 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
-
-    --font-primary: 'Delius', cursive;
+    --font-primary: 'DeliusRegular', 'Delius', cursive, system-ui, sans-serif;
 }
 
 .dark {
@@ -129,15 +137,15 @@
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
 
-    --chart-1: oklch(31.052% 0.11993 313.274);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-1: oklch(54.371% 0.24545 311.501 / 0.877);
+    --chart-2: oklch(90.2% 0.063 306.703);
+    --chart-3: oklch(55.8% 0.288 302.321);
     --chart-4: oklch(0.627 0.265 303.9);
     --chart-5: oklch(0.645 0.246 16.439);
     --chart-6: oklch(0.42 0.18 120);
     --chart-7: oklch(0.42 0.22 300);
     --chart-8: oklch(0.65 0.12 20);
-    --chart-9: oklch(0.62 0.20 285);
+    --chart-9: oklch(0.62 0.2 285);
 
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
@@ -152,65 +160,64 @@
 @layer base {
     * {
         @apply border-border outline-ring/50;
+        font-family: var(--font-sans);
     }
 
-    html {
+    html,
+    body {
         font-family: var(--font-sans);
     }
 
     body {
         @apply bg-background text-foreground;
-        font-family: var(--font-sans);
     }
 }
 
-/* чтобы CSS-переменная --wave-a плавно анимировалась */
+   
+
 @property --wave-a {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 0;
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
 }
 
 html::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background-color: var(--switch-bg, transparent);
-  opacity: 0.1;
-  visibility: hidden;
-  clip-path: circle(0% at var(--switch-x, 50%) var(--switch-y, 50%));
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background-color: var(--switch-bg, transparent);
+    opacity: 0.1;
+    visibility: hidden;
+    clip-path: circle(0% at var(--switch-x, 50%) var(--switch-y, 50%));
 }
 
 html.theme-wave-active::before {
-  visibility: visible;
+    visibility: visible;
 }
 
 html.theme-wave-in::before {
-  opacity: 1;
-  transition:
-    clip-path 700ms cubic-bezier(0.55, 0, 1, 0.45),
-    opacity 700ms cubic-bezier(0.55, 0, 1, 0.45);
-  clip-path: circle(120% at var(--switch-x, 50%) var(--switch-y, 50%));
+    opacity: 1;
+    transition: clip-path 700ms cubic-bezier(0.55, 0, 1, 0.45),
+        opacity 700ms cubic-bezier(0.55, 0, 1, 0.45);
+    clip-path: circle(120% at var(--switch-x, 50%) var(--switch-y, 50%));
 }
 
 html.theme-wave-color::before {
-  transition: background-color 200ms ease;
+    transition: background-color 200ms ease;
 }
 
 html.theme-wave-out::before {
-  opacity: 0.1;
-  transition:
-    clip-path 500ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 500ms ease;
-  clip-path: circle(0% at var(--switch-x, 50%) var(--switch-y, 50%));
+    opacity: 0.1;
+    transition: clip-path 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease;
+    clip-path: circle(0% at var(--switch-x, 50%) var(--switch-y, 50%));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.theme-wave-in::before,
-  html.theme-wave-color::before,
-  html.theme-wave-out::before {
-    transition: none;
-  }
+    html.theme-wave-in::before,
+    html.theme-wave-color::before,
+    html.theme-wave-out::before {
+        transition: none;
+    }
 }

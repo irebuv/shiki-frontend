@@ -3,8 +3,8 @@ import { useRef, useState } from 'react';
 import {
     FloatingArrow,
     FloatingPortal,
-    arrow,
     autoUpdate,
+    arrow,
     flip,
     offset,
     shift,
@@ -21,8 +21,9 @@ export function AnimeCard({ anime }: Props) {
     const [open, setOpen] = useState(false);
 
     const ARROW_H = 20;
+    const arrowRef = useRef<SVGSVGElement | null>(null);
 
-    const { refs, floatingStyles, context, placement } = useFloating({
+    const { refs, floatingStyles, context, placement, middlewareData } = useFloating({
         open,
         onOpenChange: setOpen,
         placement: 'right-start',
@@ -32,13 +33,19 @@ export function AnimeCard({ anime }: Props) {
         middleware: [
             offset(ARROW_H + 8),
             shift({ padding: 10 }),
-            flip({ padding: 10, fallbackPlacements: ['left-start'] }),
+            flip({
+                padding: 10,
+                fallbackPlacements: ['left-start', 'top', 'bottom'],
+            }),
+            arrow({ element: arrowRef }),
         ],
     });
 
     const side = placement.split('-')[0] as 'top' | 'right' | 'bottom' | 'left';
     const align = placement.split('-')[1] as 'start' | 'end' | undefined;
     const staticSide = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' }[side];
+    const arrowStyle =
+        side === 'right' || side === 'left' ? { top: '12px' } : { left: '12px' };
 
     const hover = useHover(context, {
         delay: { open: 100, close: 80 },
@@ -56,7 +63,7 @@ export function AnimeCard({ anime }: Props) {
                     src={`http://localhost:8082/storage/${anime.featured_image}`}
                     alt={anime.name}
                 />
-                <p className="mt-2 font-sans text-sm font-medium">{anime.name}</p>
+                <p className="mt-2 text-sm line-clamp-2">{anime.name}</p>
             </div>
 
             {/* POPOVER */}
@@ -78,10 +85,12 @@ export function AnimeCard({ anime }: Props) {
                         >
                             <FloatingArrow
                                 context={context}
+                                ref={arrowRef}
                                 height={ARROW_H}
                                 width={ARROW_H * 2}
                                 tipRadius={2}
                                 strokeWidth={1}
+                                style={arrowStyle}
                                 className="fill-card mt-3"
                             />
                             {/* content */}
