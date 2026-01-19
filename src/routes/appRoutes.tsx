@@ -20,9 +20,7 @@ export const appRoutes: RouteObject[] = [
             {
                 path: 'anime',
                 element: (
-                    <ProtectedRoute allowedRoles={['admin', 'user']}>
                         <Anime />
-                    </ProtectedRoute>
                 ),
             },
             { path: 'login', element: <LoginPage /> },

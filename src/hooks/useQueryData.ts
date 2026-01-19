@@ -1,5 +1,5 @@
 import api from '@/api/axios';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type UseQueryDataParams<TFilters> = {
     url: string;
@@ -41,21 +41,27 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
     const [data, setData] = useState<TData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<any>(null);
+    const requestIdRef = useRef(0);
 
     const fetchData = useCallback(
         async (paramsObj: TFilters) => {
             const searchParams = buildSearchParams(paramsObj);
+            const currentId = ++requestIdRef.current;
             setLoading(true);
             try {
-                const response = await api.get<TData>(url, {
-                    params: searchParams,
-                });
-                setData(response.data);
-                setError(null);
+                const response = await api.get<TData>(`${url}?${searchParams.toString()}`);
+                if (currentId === requestIdRef.current) {
+                    setData(response.data);
+                    setError(null);
+                }
             } catch (err) {
-                setError(err);
+                if (currentId === requestIdRef.current) {
+                    setError(err);
+                }
             } finally {
-                setLoading(false);
+                if (currentId === requestIdRef.current) {
+                    setLoading(false);
+                }
             }
         },
         [url]
@@ -99,9 +105,9 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
             fetchData(restoredFilters);
         };
 
-        window.addEventListener("popstate", onPopState);
-        return () => window.removeEventListener("popstate", onPopState);
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
     }, []);
 
-    return {data, filters, setFilters, loading, error, refetch}
+    return { data, filters, setFilters, loading, error, refetch };
 }
