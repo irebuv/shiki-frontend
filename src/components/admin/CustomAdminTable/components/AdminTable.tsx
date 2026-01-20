@@ -1,62 +1,25 @@
-import { ExpandableText } from '@/components/custom/ExpandableText';
-import { useDescriptionLines } from '@/hooks/useDescriptionLines';
-import { imageUrl } from '@/lib/imageUrl';
-import * as LucidIcons from 'lucide-react';
-import { DescriptionLinesSelect } from '@/components/custom/DescriptionLinesSelect';
-import { type DescriptionLines } from '@/lib/descriptionLines';
-import { useState } from 'react';
+import { DescriptionLinesSelect } from "@/components/custom/DescriptionLinesSelect";
+import { ExpandableText } from "@/components/custom/ExpandableText";
+import { useDescriptionLines } from "@/hooks/useDescriptionLines";
+import { DescriptionLines } from "@/lib/descriptionLines";
+import { imageUrl } from "@/lib/imageUrl";
+import { AdminTableActionButtons } from "./AdminTableActionButtons";
+import type { AdminTableProps } from "@/types/admin/adminTable";
 
-interface TableColumn {
-    label: string;
-    key: string;
-    isImage?: boolean;
-    isAction?: boolean;
-    isGallery?: boolean;
-    className?: string;
-    type?: string;
-}
-
-interface ActionConfig {
-    label: string;
-    // accept Lucide icon keys or plain string names
-    icon: keyof typeof LucidIcons | string;
-    route?: string;
-    className?: string;
-}
-
-interface TableRow {
-    [key: string]: any;
-}
-
-interface CustomTableProps {
-    columns: TableColumn[];
-    actions: ActionConfig[];
-    data: TableRow[];
-    from?: number;
-    onDelete?: (id: number, route: string) => void;
-    onView?: (row: TableRow) => void;
-    onEdit?: (row: TableRow) => void;
-    isModal?: boolean;
-}
-
-export const CustomTable = ({
-    columns,
+export default function AdminTable({
     actions,
-    data,
-    from,
-    onDelete,
+    isModal,
+    columns,
     onView,
     onEdit,
-    isModal,
-}: CustomTableProps) => {
-    const renderActionButtons = (row: TableRow) => {
-        return <div className="flex justify-center">buttons</div>;
-    };
+    onDelete,
+    data,
+    from,
+}: AdminTableProps) {
     const { lines, setLines } = useDescriptionLines<DescriptionLines>(5);
-    
     return (
-        <div className="w-full overflow-auto rounded-lg border bg-background shadow-sm">
-            <table className="w-full table-auto border-separate border-spacing-0 bg-background">
+        <div className="size-full overflow-auto rounded-lg border bg-background shadow-sm">
+            <table className="size-full table-auto border-separate border-spacing-0 bg-background">
                 <thead className="sticky top-0 z-10 bg-background shadow-sm">
                     <tr className="text-foreground">
                         <th className="border p-4">#</th>
@@ -83,7 +46,7 @@ export const CustomTable = ({
                         data.map((row, index) => (
                             <tr key={index} className="align-top">
                                 <td className="border-b border-r px-4 py-2 text-center align-top">
-                                    {index + 1}
+                                    {(from ?? 0) + index + 1}
                                 </td>
 
                                 {columns.map((col) => (
@@ -108,6 +71,15 @@ export const CustomTable = ({
                                                     </div>
                                                 )}
                                             </div>
+                                        ) : col.isAction ? (
+                                            <AdminTableActionButtons
+                                                actions={actions}
+                                                isModal={isModal}
+                                                row={row}
+                                                onView={onView}
+                                                onEdit={onEdit}
+                                                onDelete={onDelete}
+                                            />
                                         ) : (
                                             <ExpandableText text={row[col.key]} lines={lines} />
                                         )}
@@ -128,5 +100,5 @@ export const CustomTable = ({
                 </tbody>
             </table>
         </div>
-    );
-};
+    )
+}

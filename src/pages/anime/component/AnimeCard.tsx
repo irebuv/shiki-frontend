@@ -13,6 +13,7 @@ import {
     useInteractions,
 } from '@floating-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { imageUrl } from '@/lib/imageUrl';
 interface Props {
     anime: Anime;
 }
@@ -60,7 +61,7 @@ export function AnimeCard({ anime }: Props) {
             <div ref={refs.setReference} {...getReferenceProps()} className="cursor-pointer">
                 <img
                     className="aspect-2/3 w-full rounded-lg object-cover"
-                    src={`http://localhost:8082/storage/${anime.featured_image}`}
+                    src={imageUrl(anime.featured_image)}
                     alt={anime.name}
                 />
                 <p className="mt-2 text-sm line-clamp-2">{anime.name}</p>
@@ -96,8 +97,8 @@ export function AnimeCard({ anime }: Props) {
                             {/* content */}
                             <div className="flex gap-3">
                                 <img
-                                    src={`http://localhost:8082/storage/${anime.featured_image}`}
-                                    alt=""
+                                    src={imageUrl(anime.featured_image)}
+                                    alt={anime.name}
                                     className="h-24 w-16 rounded-md object-cover"
                                 />
                                 <div className="min-w-0">

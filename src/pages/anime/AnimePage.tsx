@@ -27,7 +27,7 @@ export default function AnimePage() {
         : [];
 
     return (
-        <div className="mx-auto flex flex-col gap-5 px-7 mt-2">
+        <div className="w-full mx-auto flex flex-col gap-5 px-7 mt-2">
             <div className={'grid grid-cols-5 gap-3'}>
                 <AnimeFilters
                     filters={filters}
