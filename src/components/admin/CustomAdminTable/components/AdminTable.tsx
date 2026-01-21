@@ -15,8 +15,10 @@ export default function AdminTable({
     onDelete,
     data,
     from,
+    deleteUrl,
 }: AdminTableProps) {
     const { lines, setLines } = useDescriptionLines<DescriptionLines>(5);
+    console.log(onEdit)
     return (
         <div className="size-full overflow-auto rounded-lg border bg-background shadow-sm">
             <table className="size-full table-auto border-separate border-spacing-0 bg-background">
@@ -79,6 +81,7 @@ export default function AdminTable({
                                                 onView={onView}
                                                 onEdit={onEdit}
                                                 onDelete={onDelete}
+                                                deleteUrl={deleteUrl}
                                             />
                                         ) : (
                                             <ExpandableText text={row[col.key]} lines={lines} />

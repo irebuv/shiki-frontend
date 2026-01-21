@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { routes } from "@/routes/routes";
 import { Link } from "react-router-dom";
 import * as LucidIcons from "lucide-react";
 import type { AdminTableActionButtonsProps } from "@/types/admin/adminTable";
@@ -12,6 +11,7 @@ export function AdminTableActionButtons({
     onView,
     onEdit,
     onDelete,
+    deleteUrl,
 }: AdminTableActionButtonsProps) {
     return (
         <div className="flex justify-center">
@@ -42,11 +42,15 @@ export function AdminTableActionButtons({
                     }
                 }
                 if (action.label === "Delete") {
+                    const deleteHref =
+                        action.href?.(row.id, row) ?? deleteUrl?.(row.id, row);
+                    if (!deleteHref) return null;
+
                     return (
                         <Button
                             key={index}
                             className={cn("w-10 h-10", action.className)}
-                            onClick={() => onDelete(row.id, routes.adminAnime.delete(row.id))}
+                            onClick={() => onDelete?.(row.id, deleteHref)}
                         >
                             <IconComponent size={18} />
                         </Button>

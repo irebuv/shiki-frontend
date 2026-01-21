@@ -7,7 +7,7 @@ import { Spinner } from '@radix-ui/themes';
 import { Pagination } from '@/components/custom/Pagination';
 
 export default function AnimeAdminPage() {
-    const { data, loading, error, setFilters } = useQueryData<AnimeResponse, {}>({
+    const { data, loading, error, setFilters, refetch } = useQueryData<AnimeResponse, {}>({
         url: '/admin/anime',
         initial: {
             page: 1,
@@ -46,9 +46,20 @@ export default function AnimeAdminPage() {
                 data={data.anime}
                 isModal={true}
                 from={from}
+                refetch={refetch}
                 modalTitle={'Modal title'}
                 modalDescription={'Modal desc'}
                 formFields={formFields}
+                createUrl="/admin/anime"
+                imageUploadUrl={(id) => `/admin/anime/${id}/image`}
+                deleteUrl={(id) => `/admin/anime/${id}`}
+                createLabel="Add new anime"
+                getCreatedId={(created) =>
+                    created?.anime?.id ??
+                    created?.data?.anime?.id ??
+                    created?.data?.id ??
+                    created?.id
+                }
             />
             <div className='ml-auto'>
             <Pagination items={data.pagination} onPageChange={(page) => setFilters({page})} />

@@ -25,6 +25,17 @@ export interface AdminTableActionConfig {
     method?: 'link' | 'delete' | 'button';
 }
 
+export type AdminFormFieldType = 'text' | 'textarea' | 'select' | 'file' | (string & {});
+
+export interface AdminFormField {
+    id: string;
+    name: string;
+    label: string;
+    type: AdminFormFieldType;
+    defaultValue?: unknown;
+    getValue?: (item: Record<string, any>) => unknown;
+}
+
 export interface AdminTableProps {
     columns: AdminTableColumn[];
     actions: AdminTableActionConfig[];
@@ -34,6 +45,18 @@ export interface AdminTableProps {
     onView?: (row: AdminTableRow) => void;
     onEdit?: (row: AdminTableRow) => void;
     isModal?: boolean;
+    deleteUrl?: (id: number, row: AdminTableRow) => string;
+}
+
+export interface CustomAdminTableProps extends AdminTableProps {
+    modalTitle?: string;
+    modalDescription?: string;
+    formFields: AdminFormField[];
+    refetch?: () => void;
+    createUrl: string;
+    imageUploadUrl?: (id: number) => string;
+    createLabel?: string;
+    getCreatedId?: (created: any) => number | undefined;
 }
 
 export interface AdminTableActionButtonsProps {
@@ -43,4 +66,5 @@ export interface AdminTableActionButtonsProps {
     onView?: (row: AdminTableRow) => void;
     onEdit?: (row: AdminTableRow) => void;
     onDelete?: (id: number, route: string) => void;
+    deleteUrl?: (id: number, row: AdminTableRow) => string;
 }
