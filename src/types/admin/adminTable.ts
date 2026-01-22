@@ -1,4 +1,5 @@
 import type * as LucideIcons from 'lucide-react';
+import type { ZodTypeAny } from 'zod';
 
 export interface AdminTableColumn {
     label: string;
@@ -34,6 +35,7 @@ export interface AdminFormField {
     type: AdminFormFieldType;
     defaultValue?: unknown;
     getValue?: (item: Record<string, any>) => unknown;
+    validation?: ZodTypeAny | false;
 }
 
 export interface AdminTableProps {

@@ -1,4 +1,48 @@
+import { z } from 'zod';
+import type { AdminFormField } from '@/types/admin/adminTable';
+
+const formFields: AdminFormField[] = [
+    {
+        id: 'name',
+        name: 'name',
+        label: 'Name',
+        type: 'text',
+        defaultValue: '',
+        validation: z.string().trim().min(3, 'Min 3 chars').max(120, 'Max 120 chars'),
+    },
+    {
+        id: 'description',
+        name: 'description',
+        label: 'Description',
+        type: 'textarea',
+        defaultValue: '',
+        validation: z.string().max(500, 'Max 500 chars').optional().or(z.literal('')),
+    },
+    {
+        id: 'rating',
+        name: 'rating',
+        label: 'Rate',
+        type: 'text',
+        defaultValue: '',
+        validation: z.string().trim().min(3, 'Min 3 chars').max(120, 'Max 120 chars'),
+    },
+    {
+        id: 'image',
+        name: 'image',
+        label: 'Image',
+        type: 'file',
+        validation: z
+            .instanceof(File)
+            .optional()
+            .or(z.null())
+            .refine((f) => !f || f.size <= 8_000_000, 'Image must be <= 8MB')
+            .refine((f) => !f || /^image\//.test(f.type), 'Only images'),
+    },
+];
+
 export const animeTableConfig = {
+    modalTitle: 'Modal title',
+    modalDescription: 'Modal description',
     columns: [
         { label: 'Featured Image', key: 'featured_image', isImage: true, className: 'border p-4' },
         { label: 'Gallery', key: 'gallery', isGallery: true, className: 'border p-4' },
@@ -9,8 +53,22 @@ export const animeTableConfig = {
         { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
     ],
     actions: [
-        { label: 'View', icon: 'Eye', className: "cursor-pointer rounded-lg bg-sky-600 p-2 text-white hover:opacity-90" },
-        { label: 'Edit', icon: 'Pencil', className: "ms-2 cursor-pointer rounded-lg bg-green-600 p-2 text-white hover:opacity-90" },
-        { label: 'Delete', icon: 'Trash',  className: "ms-2 cursor-pointer rounded-lg bg-red-600 p-2 text-white hover:opacity-90" },
-    ]
-}
+        {
+            label: 'View',
+            icon: 'Eye',
+            className: 'cursor-pointer rounded-lg bg-sky-600 p-2 text-white hover:opacity-90',
+        },
+        {
+            label: 'Edit',
+            icon: 'Pencil',
+            className:
+                'ms-2 cursor-pointer rounded-lg bg-green-600 p-2 text-white hover:opacity-90',
+        },
+        {
+            label: 'Delete',
+            icon: 'Trash',
+            className: 'ms-2 cursor-pointer rounded-lg bg-red-600 p-2 text-white hover:opacity-90',
+        },
+    ],
+    formFields,
+};

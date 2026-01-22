@@ -14,7 +14,12 @@ export default function AnimeAdminPage() {
         },
     });
     console.log('test', data);
-    if (loading) return <div className='grid w-full min-h-[60vh] place-items-center scale-200'><Spinner /></div>;
+    if (loading)
+        return (
+            <div className="grid w-full min-h-[60vh] place-items-center scale-200">
+                <Spinner />
+            </div>
+        );
 
     const from = ((data?.pagination?.current_page ?? 1) - 1) * (data?.pagination?.per_page ?? 0);
 
@@ -27,29 +32,19 @@ export default function AnimeAdminPage() {
             />
         );
     }
-    const formFields = [
-        { id: "name", name: "name", label: "Name", type: "text" },
-        {
-            id: "description",
-            name: "description",
-            label: "Description",
-            type: "textarea",
-        },
-        { id: "type", name: "type", label: "Type", type: "select" },
-        { id: "image", name: "image", label: "Image", type: "file" },
-    ];
+   
     return (
-        <div className='flex flex-col gap-4'>
+        <div className="flex flex-col gap-4">
             <CustomAdminTable
                 columns={animeTableConfig.columns}
                 actions={animeTableConfig.actions}
+                formFields={animeTableConfig.formFields}
+                modalTitle={animeTableConfig.modalTitle}
+                modalDescription={animeTableConfig.modalDescription}
                 data={data.anime}
                 isModal={true}
                 from={from}
                 refetch={refetch}
-                modalTitle={'Modal title'}
-                modalDescription={'Modal desc'}
-                formFields={formFields}
                 createUrl="/admin/anime"
                 imageUploadUrl={(id) => `/admin/anime/${id}/image`}
                 deleteUrl={(id) => `/admin/anime/${id}`}
@@ -61,8 +56,8 @@ export default function AnimeAdminPage() {
                     created?.id
                 }
             />
-            <div className='ml-auto'>
-            <Pagination items={data.pagination} onPageChange={(page) => setFilters({page})} />
+            <div className="ml-auto">
+                <Pagination items={data.pagination} onPageChange={(page) => setFilters({ page })} />
             </div>
         </div>
     );

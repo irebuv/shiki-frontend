@@ -4,9 +4,10 @@ import type { AdminFormField, CustomAdminTableProps } from '@/types/admin/adminT
 import CustomModalForm from './components/CustomModalForm';
 import { useApiForm } from '@/hooks/useApiForm';
 import { validateWithZod, type ClientErrors } from '@/lib/validateWithZod';
-import { FormAdminSchema } from '@/validation/formAdmin';
+import { buildAdminSchema } from '@/validation/formAdmin';
 import { Button } from '@/components/ui/button';
 import { uploadImage } from '@/api/uploadImage';
+import type { ZodObject, ZodTypeAny } from 'zod';
 
 const getDefaultFieldValue = (field: AdminFormField) => {
     if (field.type === 'file') return null;
@@ -66,6 +67,7 @@ export const CustomAdminTable = ({
     const resolveCreatedId = getCreatedId ?? defaultGetCreatedId;
 
     const initialFormData = useMemo(() => buildInitialFormData(formFields), [formFields]);
+    const formSchema = useMemo(() => buildAdminSchema(formFields), [formFields]);
 
     const {
         data: formData,
@@ -103,7 +105,7 @@ export const CustomAdminTable = ({
         setModalOpen(true);
         setTimeout(
             () =>
-                setIsValid(FormAdminSchema.safeParse(itemValues).success),
+                setIsValid(formSchema.safeParse(itemValues).success),
             0,
         );
     };
@@ -113,7 +115,7 @@ export const CustomAdminTable = ({
 
         const run = async () => {
             if (mode === 'create') {
-                const result = validateWithZod(FormAdminSchema, formData);
+                const result = validateWithZod(formSchema, formData);
                 if (hasValidationErrors(result)) {
                     setFormErrorsZod(result.errors);
                     return;
@@ -154,7 +156,11 @@ export const CustomAdminTable = ({
 
     const mergedFormErrors = { ...formErrors, ...formErrorsZod };
 
-    const validateField = (schema: any, name: string, value: any) => {
+    const validateField = (
+        schema: ZodObject<Record<string, ZodTypeAny>>,
+        name: string,
+        value: any,
+    ) => {
         const shape = schema.shape?.[name];
         if (!shape) return null;
         const result = shape.safeParse(value);
@@ -163,12 +169,12 @@ export const CustomAdminTable = ({
 
     const setFormFields = (name: string, value: any) => {
         setFormData(name as any, value);
-        const err = validateField(FormAdminSchema, name, value);
+        const err = validateField(formSchema, name, value);
         setFormErrorsZod((prev) => ({
             ...prev,
             [name]: err ?? '',
         }));
-        const allValid = FormAdminSchema.safeParse({
+        const allValid = formSchema.safeParse({
             ...formData,
             [name]: value,
         }).success;
