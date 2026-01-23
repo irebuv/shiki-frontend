@@ -14,13 +14,6 @@ export default function AnimeAdminPage() {
         },
     });
     console.log('test', data);
-    if (loading)
-        return (
-            <div className="grid w-full min-h-[60vh] place-items-center scale-200">
-                <Spinner />
-            </div>
-        );
-
     const from = ((data?.pagination?.current_page ?? 1) - 1) * (data?.pagination?.per_page ?? 0);
 
     if (error) {
@@ -34,14 +27,24 @@ export default function AnimeAdminPage() {
     }
    
     return (
-        <div className="flex flex-col gap-4">
+        <div className="relative flex flex-col gap-4">
+            {loading && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-xs rounded-xl">
+                    <div className="flex items-center gap-3 rounded-lg bg-background/80 px-4 py-3 shadow">
+                        <div className="scale-150">
+                            <Spinner />
+                        </div>
+                        <span className="text-sm text-foreground">Loading...</span>
+                    </div>
+                </div>
+            )}
             <CustomAdminTable
                 columns={animeTableConfig.columns}
                 actions={animeTableConfig.actions}
                 formFields={animeTableConfig.formFields}
                 modalTitle={animeTableConfig.modalTitle}
                 modalDescription={animeTableConfig.modalDescription}
-                data={data.anime}
+                data={data?.anime ?? []}
                 isModal={true}
                 from={from}
                 refetch={refetch}
@@ -56,9 +59,14 @@ export default function AnimeAdminPage() {
                     created?.id
                 }
             />
-            <div className="ml-auto">
-                <Pagination items={data.pagination} onPageChange={(page) => setFilters({ page })} />
-            </div>
+            {data?.pagination && (
+                <div className="ml-auto">
+                    <Pagination
+                        items={data.pagination}
+                        onPageChange={(page) => setFilters({ page })}
+                    />
+                </div>
+            )}
         </div>
     );
 }

@@ -8,6 +8,8 @@ import { buildAdminSchema } from '@/validation/formAdmin';
 import { Button } from '@/components/ui/button';
 import { uploadImage } from '@/api/uploadImage';
 import type { ZodObject, ZodTypeAny } from 'zod';
+import api from '@/api/axios';
+import { toast } from '@/components/custom/Sonner';
 
 const getDefaultFieldValue = (field: AdminFormField) => {
     if (field.type === 'file') return null;
@@ -34,6 +36,15 @@ const buildFormDataFromItem = (fields: AdminFormField[], item: Record<string, an
     }, {});
 };
 
+const buildPreviewUrlsFromItem = (fields: AdminFormField[], item: Record<string, any>) => {
+    return fields.reduce<Record<string, string | null>>((acc, field) => {
+        if (field.type !== 'file') return acc;
+        const url = field.previewUrl ? field.previewUrl(item) : null;
+        acc[field.name] = url ?? null;
+        return acc;
+    }, {});
+};
+
 const defaultGetCreatedId = (created: any) => created?.data?.id ?? created?.id;
 const hasValidationErrors = (
     result: { ok: true } | { ok: false; errors: ClientErrors },
@@ -54,6 +65,8 @@ export const CustomAdminTable = ({
     formFields,
     refetch,
     createUrl,
+    updateUrl,
+    updateMethod,
     imageUploadUrl,
     createLabel,
     getCreatedId,
@@ -64,7 +77,9 @@ export const CustomAdminTable = ({
     const [mode, setMode] = useState<'create' | 'view' | 'edit'>('create');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [filePreviewUrls, setFilePreviewUrls] = useState<Record<string, string | null>>({});
     const resolveCreatedId = getCreatedId ?? defaultGetCreatedId;
+    const resolveUpdateUrl = updateUrl ?? ((id: number) => `${createUrl}/${id}`);
 
     const initialFormData = useMemo(() => buildInitialFormData(formFields), [formFields]);
     const formSchema = useMemo(() => buildAdminSchema(formFields), [formFields]);
@@ -85,6 +100,7 @@ export const CustomAdminTable = ({
         setFormErrorsZod({});
         setMode('create');
         setEditingId(null);
+        setFilePreviewUrls({});
         setModalOpen(true);
         setIsValid(false);
     };
@@ -93,6 +109,7 @@ export const CustomAdminTable = ({
         setFormErrorsZod({});
         setMode('view');
         setEditingId(item.id);
+        setFilePreviewUrls(buildPreviewUrlsFromItem(formFields, item ?? {}));
         setModalOpen(true);
         setIsValid(false);
     };
@@ -102,6 +119,7 @@ export const CustomAdminTable = ({
         setFormErrorsZod({});
         setMode('edit');
         setEditingId(item.id);
+        setFilePreviewUrls(buildPreviewUrlsFromItem(formFields, item ?? {}));
         setModalOpen(true);
         setTimeout(
             () =>
@@ -126,13 +144,53 @@ export const CustomAdminTable = ({
                 const created = await formSubmit(createUrl, 'post', {
                     onSuccess: () => {},
                 });
+                if (created?.message) toast.success(created.message);
                 const createdId = resolveCreatedId(created);
 
                 // Upload media after create
                 if (formData.image && createdId && imageUploadUrl) {
                     setUploadingImage(true);
                     try {
-                        await uploadImage(imageUploadUrl(createdId), formData.image as File);
+                        const imageRes = await uploadImage(
+                            imageUploadUrl(createdId),
+                            formData.image as File,
+                        );
+                        if (imageRes?.message) toast.success(imageRes.message);
+                    } finally {
+                        setUploadingImage(false);
+                    }
+                }
+
+                resetForm();
+                setModalOpen(false);
+                refetch?.();
+            }
+
+            if (mode === 'edit') {
+                if (!editingId) return;
+
+                const result = validateWithZod(formSchema, formData);
+                if (hasValidationErrors(result)) {
+                    setFormErrorsZod(result.errors);
+                    return;
+                }
+                setFormErrorsZod({});
+
+                const updated = await formSubmit(resolveUpdateUrl(editingId), updateMethod ?? 'put', {
+                    onSuccess: () => {},
+                });
+                if (updated?.message) toast.success(updated.message);
+
+                const updatedId = resolveCreatedId(updated) ?? editingId;
+
+                if (formData.image && updatedId && imageUploadUrl) {
+                    setUploadingImage(true);
+                    try {
+                        const imageRes = await uploadImage(
+                            imageUploadUrl(updatedId),
+                            formData.image as File,
+                        );
+                        if (imageRes?.message) toast.success(imageRes.message);
                     } finally {
                         setUploadingImage(false);
                     }
@@ -145,6 +203,7 @@ export const CustomAdminTable = ({
         };
         withProcessing(run);
     };
+
 
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Form block ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Form block ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
@@ -182,7 +241,19 @@ export const CustomAdminTable = ({
     };
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Clients errors ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Clients errors ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
+    
+    const handleDelete = async (id: number, url: string) => {
+        if (!url) return;
+        const confirmed = window.confirm('Delete this item?');
+        if (!confirmed) return;
 
+        await withProcessing(async () => {
+            const res = await api.delete(url);
+            const msg = res?.data?.message;
+            if (msg) toast.success(msg);
+            refetch?.();
+        });
+    };
     return (
         <>
             <Button type="button" onClick={openCreate} className="w-fit">
@@ -192,8 +263,8 @@ export const CustomAdminTable = ({
                 actions={actions}
                 columns={columns}
                 isModal={isModal}
-                onView={onView}
-                onDelete={onDelete}
+                onView={onView ?? ((el) => openView(el))}
+                onDelete={onDelete ?? handleDelete}
                 onEdit={(el) => openEdit(el)}
                 data={data}
                 from={from}
@@ -210,6 +281,11 @@ export const CustomAdminTable = ({
                 errors={mergedFormErrors}
                 processing={formProcessing}
                 uploadingImage={uploadingImage}
+                readOnly={mode === 'view'}
+                filePreviewUrls={filePreviewUrls}
+                onClearPreview={(fieldName: string) =>
+                    setFilePreviewUrls((prev) => ({ ...prev, [fieldName]: null }))
+                }
                 onSubmit={handleSubmit}
                 submitLabel={mode === 'edit' ? 'Save' : 'Create'}
                 isValid={isValid}

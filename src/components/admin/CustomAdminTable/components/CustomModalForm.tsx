@@ -11,9 +11,12 @@ import {
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/ui/input-error';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { DESCRIPTION_LINE_OPTIONS } from '@/lib/descriptionLines';
 
 export default function CustomModalForm({
     open,
@@ -29,30 +32,41 @@ export default function CustomModalForm({
     onSubmit,
     submitLabel = 'Submit',
     isValid,
+    filePreviewUrls,
+    onClearPreview,
+    readOnly = false,
 }) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showPreview, setShowPreview] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date>();
     const [dragActive, setDragActive] = useState(false);
+    const [descriptionRows, setDescriptionRows] = useLocalStorage<number>(
+        'modal.description.rows',
+        6,
+    );
+
+    const fileFieldName = useMemo(() => {
+        const fileField = fields?.find((field) => field.type === 'file');
+        return fileField?.name ?? null;
+    }, [fields]);
+
+    const fileValue = fileFieldName ? data?.[fileFieldName] : null;
+    const externalPreviewUrl = fileFieldName ? filePreviewUrls?.[fileFieldName] : null;
 
     useEffect(() => {
-        if (!data.image) {
-            setShowPreview(false);
+        if (fileValue instanceof File) {
+            const url = URL.createObjectURL(fileValue);
+            setPreviewUrl(url);
+            setShowPreview(true);
+            return () => URL.revokeObjectURL(url);
+        }
+        if (externalPreviewUrl) {
+            setPreviewUrl(externalPreviewUrl);
+            setShowPreview(true);
             return;
         }
-        const url = URL.createObjectURL(data.image as File);
-        setPreviewUrl((prev) => {
-            if (prev) URL.revokeObjectURL(prev);
-            return url;
-        });
-        setShowPreview(true);
-    }, [data.image]);
-
-    useEffect(() => {
-        return () => {
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-        };
-    }, [previewUrl]);
+        setShowPreview(false);
+    }, [fileValue, externalPreviewUrl]);
 
     //drag & drop
     const handleDrag = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -63,6 +77,7 @@ export default function CustomModalForm({
     };
 
     const handleDrop = (e: React.DragEvent<HTMLLabelElement>, fieldName: string) => {
+        if (readOnly) return;
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
@@ -84,24 +99,57 @@ export default function CustomModalForm({
                 <form onSubmit={onSubmit} className="space-y-4">
                     {fields.map((f) => (
                         <div key={f.id}>
-                            <Label htmlFor={f.id}>{f.label}</Label>
+                            {f.name === 'description' ? (
+                                <div className="flex items-center justify-between gap-3 py-1">
+                                    <Label htmlFor={f.id}>{f.label}</Label>
+                                    <Select
+                                        value={String(descriptionRows)}
+                                        onValueChange={(v) => setDescriptionRows(Number(v))}
+                                    >
+                                        <SelectTrigger className="h-8 w-16">
+                                            <SelectValue placeholder="Rows" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {DESCRIPTION_LINE_OPTIONS.filter(
+                                                (v) => v !== 'all',
+                                            ).map((n) => (
+                                                <SelectItem key={n} value={String(n)}>
+                                                    {n}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            ) : (
+                                <Label htmlFor={f.id}>{f.label}</Label>
+                            )}
                             {f.type === 'textarea' ? (
-                                <Textarea></Textarea>
+                                <Textarea
+                                    id={f.id}
+                                    name={f.name}
+                                    value={data[f.name] ?? ''}
+                                    readOnly={readOnly}
+                                    rows={f.name === 'description' ? descriptionRows : undefined}
+                                    onChange={(e) => {
+                                        if (readOnly) return;
+                                        setData(f.name, e.target.value);
+                                    }}
+                                />
                             ) : f.type === 'file' ? (
                                 <div className="flex flex-col space-y-3">
                                     <Label
                                         htmlFor={f.id}
-                                        onDragEnter={handleDrag}
-                                        onDragOver={handleDrag}
-                                        onDragLeave={handleDrag}
-                                        onDrop={(e) => handleDrop(e, f.name)}
+                                        onDragEnter={readOnly ? undefined : handleDrag}
+                                        onDragOver={readOnly ? undefined : handleDrag}
+                                        onDragLeave={readOnly ? undefined : handleDrag}
+                                        onDrop={readOnly ? undefined : (e) => handleDrop(e, f.name)}
                                         className={`relative w-full cursor-pointer rounded-lg border-2
                                                     border-dashed p-5 text-center text-sm transition
                                                     ${
                                                         dragActive
                                                             ? 'border-blue-500 bg-blue-50 text-chart-1'
                                                             : 'border-gray-400 bg-background text-foreground hover:border-chart-1 hover:text-chart-1'
-                                                    }`}
+                                                    } ${readOnly ? 'cursor-not-allowed opacity-70' : ''}`}
                                     >
                                         <Input
                                             id={f.id}
@@ -109,7 +157,9 @@ export default function CustomModalForm({
                                             type="file"
                                             accept="image/*"
                                             className="hidden"
+                                            disabled={readOnly}
                                             onChange={(e) => {
+                                                if (readOnly) return;
                                                 const file = e.target.files?.[0];
                                                 if (file && file.type.startsWith('image/')) {
                                                     setData(f.name, file);
@@ -146,26 +196,29 @@ export default function CustomModalForm({
                                             }
                                         }}
                                     >
-                                        {previewUrl && (
-                                            <div className="relative inline-block group cursor-pointer self-start">
-                                                <img
-                                                    src={previewUrl}
+                                    {previewUrl && (
+                                        <div className="relative inline-block group cursor-pointer self-start">
+                                            <img
+                                                src={previewUrl}
                                                     alt="Preview"
                                                     className="rounded-lg border object-contain dark:bg-muted-foreground/40 max-h-36 transition group-hover:opacity-75 p-2"
                                                 />
-                                                <span
-                                                    onClick={() => {
-                                                        setData(f.name, null);
-                                                        const input = document.getElementById(
-                                                            f.id,
-                                                        ) as HTMLInputElement | null;
-                                                        if (input) input.value = '';
-                                                    }}
-                                                    className="absolute inset-0 flex items-center justify-center text-foreground text-center
+                                                {!readOnly && (
+                                                    <span
+                                                        onClick={() => {
+                                                            setData(f.name, null);
+                                                            onClearPreview?.(f.name);
+                                                            const input = document.getElementById(
+                                                                f.id,
+                                                            ) as HTMLInputElement | null;
+                                                            if (input) input.value = '';
+                                                        }}
+                                                        className="absolute inset-0 flex items-center justify-center text-foreground text-center
                                                  text-sm bg-background/40 rounded-lg opacity-0 group-hover:opacity-100 transition"
-                                                >
-                                                    Click to remove
-                                                </span>
+                                                    >
+                                                        Click to remove
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -175,7 +228,9 @@ export default function CustomModalForm({
                                     id={f.id}
                                     name={f.name}
                                     value={data[f.name] ?? ''}
+                                    readOnly={readOnly}
                                     onChange={(e) => {
+                                        if (readOnly) return;
                                         setData(f.name, e.target.value);
                                     }}
                                 />
@@ -190,13 +245,15 @@ export default function CustomModalForm({
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button type="submit" disabled={processing || !isValid || uploadingImage}>
-                            {processing
-                                ? 'Saving...'
-                                : uploadingImage
-                                  ? 'Uploading image...'
-                                  : submitLabel}
-                        </Button>
+                        {!readOnly && (
+                            <Button type="submit" disabled={processing || !isValid || uploadingImage}>
+                                {processing
+                                    ? 'Saving...'
+                                    : uploadingImage
+                                      ? 'Uploading image...'
+                                      : submitLabel}
+                            </Button>
+                        )}
                     </DialogFooter>
                 </form>
             </DialogContent>

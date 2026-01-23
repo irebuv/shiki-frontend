@@ -18,13 +18,12 @@ export default function AdminTable({
     deleteUrl,
 }: AdminTableProps) {
     const { lines, setLines } = useDescriptionLines<DescriptionLines>(5);
-    console.log(onEdit)
     return (
         <div className="size-full overflow-auto rounded-lg border bg-background shadow-sm">
             <table className="size-full table-auto border-separate border-spacing-0 bg-background">
                 <thead className="sticky top-0 z-10 bg-background shadow-sm">
                     <tr className="text-foreground">
-                        <th className="border p-4">#</th>
+                        <th className="border p-4 text-center">#</th>
                         {columns.map((column) => (
                             <th
                                 key={column.key}

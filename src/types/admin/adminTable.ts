@@ -36,6 +36,7 @@ export interface AdminFormField {
     defaultValue?: unknown;
     getValue?: (item: Record<string, any>) => unknown;
     validation?: ZodTypeAny | false;
+    previewUrl?: (item: Record<string, any>) => string | null;
 }
 
 export interface AdminTableProps {
@@ -56,6 +57,8 @@ export interface CustomAdminTableProps extends AdminTableProps {
     formFields: AdminFormField[];
     refetch?: () => void;
     createUrl: string;
+    updateUrl?: (id: number) => string;
+    updateMethod?: 'put' | 'patch';
     imageUploadUrl?: (id: number) => string;
     createLabel?: string;
     getCreatedId?: (created: any) => number | undefined;

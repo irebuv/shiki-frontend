@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { AdminFormField } from '@/types/admin/adminTable';
+import { imageUrl } from '@/lib/imageUrl';
 
 const formFields: AdminFormField[] = [
     {
@@ -16,7 +17,7 @@ const formFields: AdminFormField[] = [
         label: 'Description',
         type: 'textarea',
         defaultValue: '',
-        validation: z.string().max(500, 'Max 500 chars').optional().or(z.literal('')),
+        validation: z.string().optional().or(z.literal('')),
     },
     {
         id: 'rating',
@@ -24,7 +25,7 @@ const formFields: AdminFormField[] = [
         label: 'Rate',
         type: 'text',
         defaultValue: '',
-        validation: z.string().trim().min(3, 'Min 3 chars').max(120, 'Max 120 chars'),
+        validation: z.string().trim().min(1, 'Min 1 chars').max(120, 'Max 120 chars'),
     },
     {
         id: 'image',
@@ -37,6 +38,7 @@ const formFields: AdminFormField[] = [
             .or(z.null())
             .refine((f) => !f || f.size <= 8_000_000, 'Image must be <= 8MB')
             .refine((f) => !f || /^image\//.test(f.type), 'Only images'),
+        previewUrl: (item) => (item?.featured_image ? imageUrl(item.featured_image) : null),
     },
 ];
 
@@ -49,7 +51,7 @@ export const animeTableConfig = {
         { label: 'Product Name', key: 'name', className: 'border w-90 p-4' },
         { label: 'Description', key: 'description', className: 'border p-4 w-1/3' },
         { label: 'Rate', key: 'rating', className: 'border p-4' },
-        { label: 'Created Date', key: 'created_at', className: 'border p-4' },
+        { label: 'Created Date', key: 'created_at', className: 'border p-4 text-center' },
         { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
     ],
     actions: [

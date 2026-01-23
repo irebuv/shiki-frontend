@@ -1,6 +1,8 @@
 import Logo from "@/components/shared/Header/Logo";
 import NavLinks from "@/components/shared/Header/NavLinks";
 import { ThemeToggle } from "@/components/shared/Header/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 import { Home, LayoutGrid, LucideProps, Shell } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -11,6 +13,7 @@ type AdminNavLink = {
 };
 
 export default function AdminHeader() {
+    const {logout} = useAuth();
     const linksNav: AdminNavLink[] = [
         {
             title: 'Home',
@@ -35,7 +38,11 @@ export default function AdminHeader() {
                 <Logo />
             </Link>
             <NavLinks links={linksNav} className="mt-6" />
-            <ThemeToggle className="mt-auto self-end" />
+            <div className="mt-auto justify-between flex gap-2">
+                <Button variant="ghost" onClick={logout}>Logout</Button>
+                <ThemeToggle />
+            </div>
+            
         </header>
     )
 }
