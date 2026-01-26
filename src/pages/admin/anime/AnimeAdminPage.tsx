@@ -7,7 +7,7 @@ import { Spinner } from '@radix-ui/themes';
 import { Pagination } from '@/components/custom/Pagination';
 
 export default function AnimeAdminPage() {
-    const { data, loading, error, setFilters, refetch } = useQueryData<AnimeResponse, {}>({
+    const { data, loading, error, setFilters, refetch, filters } = useQueryData<AnimeResponse, {}>({
         url: '/admin/anime',
         initial: {
             page: 1,
@@ -27,7 +27,7 @@ export default function AnimeAdminPage() {
     }
    
     return (
-        <div className="relative flex flex-col gap-4">
+        <div className="size-full relative flex flex-col gap-4">
             {loading && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/5 backdrop-blur-xs rounded-xl">
                     <div className="flex items-center gap-3 rounded-lg bg-background/80 px-4 py-3 shadow">
@@ -42,22 +42,14 @@ export default function AnimeAdminPage() {
                 columns={animeTableConfig.columns}
                 actions={animeTableConfig.actions}
                 formFields={animeTableConfig.formFields}
-                modalTitle={animeTableConfig.modalTitle}
-                modalDescription={animeTableConfig.modalDescription}
+                modalTitle="Anime"
+                createLabel="Add new anime"
                 data={data?.anime ?? []}
                 isModal={true}
                 from={from}
                 refetch={refetch}
                 createUrl="/admin/anime"
-                imageUploadUrl={(id) => `/admin/anime/${id}/image`}
-                deleteUrl={(id) => `/admin/anime/${id}`}
-                createLabel="Add new anime"
-                getCreatedId={(created) =>
-                    created?.anime?.id ??
-                    created?.data?.anime?.id ??
-                    created?.data?.id ??
-                    created?.id
-                }
+                filters={data?.filtersList ?? null}
             />
             {data?.pagination && (
                 <div className="ml-auto">

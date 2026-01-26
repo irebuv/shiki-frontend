@@ -1,3 +1,20 @@
+:root {
+    --admin-filter-card-bg: #fff;
+    --admin-filter-header-bg: #f7f9ff;
+    --admin-filter-border: #e3e7f1;
+    --admin-filter-divider: #e6e6e6;
+    --admin-filter-shadow: rgba(0, 0, 0, 0.02);
+    --admin-filter-accent: #3b61f3;
+    --admin-filter-text-muted: #7a8195;
+    --admin-filter-danger: #e03a3a;
+    --admin-filter-toggle-off: #ccc;
+    --admin-filter-toggle-on: #3498db;
+    --admin-filter-toggle-thumb: #fff;
+    --admin-filter-toggle-thumb-on: #f7f7f7;
+    --admin-filter-toggle-text-off: #999;
+    --admin-filter-toggle-text-on: #fff;
+}
+
 .current-filter {
     label {
         input {
@@ -29,11 +46,186 @@
     }
 }
 
-$primary: #4f46e5;
+.admin-filters {
+    display: grid;
+    gap: 12px;
+    padding: 8px 0;
+}
 
-.test-box {
-  padding: 1rem;
-  background-color: var(--chart-1);
-  border: 1px solid var(--chart-2);
-  color: var(--chart-3);
+.admin-filters-toggle {
+    justify-self: start;
+    border: 1px solid var(--admin-filter-border);
+    background: var(--admin-filter-card-bg);
+    color: var(--admin-filter-text-muted);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.admin-filters-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+    .admin-filters-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .admin-filters-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.admin-filters-body {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateY(0);
+    transition: grid-template-rows 350ms ease, opacity 250ms ease, transform 250ms ease;
+    overflow: hidden;
+    padding-top: 6px;
+}
+
+.admin-filters-body > .admin-filters-grid {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.admin-filters.is-collapsed .admin-filters-body {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+}
+
+.admin-filter-group {
+    background: var(--admin-filter-card-bg);
+    border: 1px solid var(--admin-filter-border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 var(--admin-filter-shadow);
+}
+
+.admin-filter-header {
+    padding: 10px 16px;
+    background: var(--admin-filter-header-bg);
+    border-bottom: 1px solid var(--admin-filter-border);
+
+    h6 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--admin-filter-accent);
+    }
+}
+
+.admin-filter-list {
+    padding: 14px 16px 16px;
+    display: grid;
+    gap: 16px;
+}
+
+.admin-filter-item {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--admin-filter-divider);
+
+    &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+}
+
+.admin-filter-label {
+    font-size: 14px;
+    color: var(--admin-filter-text-muted);
+    text-align: center;
+}
+
+.admin-filter-note {
+    font-size: 12px;
+    color: var(--admin-filter-danger);
+    text-align: center;
+}
+
+/* Toggle styles (provided) */
+.filter-checks {
+    display: grid;
+    justify-content: center;
+}
+
+.filter-checks input {
+    display: none;
+}
+
+.filter-checks input + label,
+.filter-checks input + label::before,
+.filter-checks input + label::after {
+    transition: all 0.2s;
+}
+
+.filter-checks input + label {
+    display: inline-block;
+    position: relative;
+    width: 86px;
+    height: 30px;
+    border-radius: 25px;
+    cursor: pointer;
+}
+
+.filter-checks input + label::before {
+    display: block;
+    content: attr(data-off-label);
+    position: absolute;
+    top: 9px;
+    right: 14px;
+    color: var(--admin-filter-toggle-text-off);
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.filter-checks input + label::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background-color: var(--admin-filter-toggle-thumb);
+    border-radius: 50%;
+}
+
+.filter-checks input:checked + label::before {
+    content: attr(data-on-label);
+    left: 14px;
+    right: auto;
+    color: var(--admin-filter-toggle-text-on);
+}
+
+.filter-checks input:checked + label::after {
+    left: 59px;
+    background-color: var(--admin-filter-toggle-thumb-on);
+}
+
+.filter-checks .demo1 + label {
+    background-color: var(--admin-filter-toggle-off);
+}
+
+.filter-checks .demo1 + label::before {
+    color: var(--admin-filter-toggle-text-off);
+}
+
+.filter-checks .demo1:checked + label {
+    background-color: var(--admin-filter-toggle-on);
+}
+
+.filter-checks .demo1:checked + label::before {
+    color: var(--admin-filter-toggle-text-on);
 }

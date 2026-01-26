@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "default" | "outline" | "ghost" | "solid";
+    variant?: "default" | "outline" | "ghost" | "solid" | "filter";
     size?: "sm" | "md" | "lg";
 }
 
@@ -16,6 +16,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             outline: "border border-neutral-300 hover:bg-neutral-100",
             ghost: "hover:bg-neutral-100 text-neutral-800",
             solid: "bg-violet-600 text-white hover:bg-violet-700",
+            filter: "admin-filters-toggle",
         };
 
         const sizes = {

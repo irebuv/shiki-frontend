@@ -17,7 +17,7 @@ const formFields: AdminFormField[] = [
         label: 'Description',
         type: 'textarea',
         defaultValue: '',
-        validation: z.string().optional().or(z.literal('')),
+        validation: z.string().max(5000, 'Max 5000 chars').optional().or(z.literal('')),
     },
     {
         id: 'rating',
@@ -26,6 +26,20 @@ const formFields: AdminFormField[] = [
         type: 'text',
         defaultValue: '',
         validation: z.string().trim().min(1, 'Min 1 chars').max(120, 'Max 120 chars'),
+    },
+    {
+        id: 'filter_ids',
+        name: 'filter_ids',
+        label: 'Filters',
+        type: 'filters',
+        defaultValue: [],
+        validation: false,
+        getValue: (item) =>
+            Array.isArray(item?.filter_ids)
+                ? item.filter_ids
+                : Array.isArray(item?.filters)
+                  ? item.filters.map((filter: { id: number }) => filter.id)
+                  : [],
     },
     {
         id: 'image',
@@ -43,15 +57,13 @@ const formFields: AdminFormField[] = [
 ];
 
 export const animeTableConfig = {
-    modalTitle: 'Modal title',
-    modalDescription: 'Modal description',
     columns: [
         { label: 'Featured Image', key: 'featured_image', isImage: true, className: 'border p-4' },
-        { label: 'Gallery', key: 'gallery', isGallery: true, className: 'border p-4' },
         { label: 'Product Name', key: 'name', className: 'border w-90 p-4' },
         { label: 'Description', key: 'description', className: 'border p-4 w-1/3' },
         { label: 'Rate', key: 'rating', className: 'border p-4' },
         { label: 'Created Date', key: 'created_at', className: 'border p-4 text-center' },
+        { label: 'Updated Date', key: 'updated_at', className: 'border p-4 text-center' },
         { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
     ],
     actions: [

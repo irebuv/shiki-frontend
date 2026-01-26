@@ -1,10 +1,24 @@
 
 
+export type AdminFilterItem = {
+    id: number;
+    title: string;
+    visible?: boolean;
+};
+
+export type FiltersMap = Record<string, AdminFilterItem[]>;
+
 export interface Anime {
     id: number;
     name: string;
     description: string | null;
     featured_image: string;
+    featured_image_url?: string | null;
+    rating?: string | number | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+    filters?: { id: number; pivot?: { anime_id: number; filter_id: number } }[];
+    filter_ids?: number[];
 }
 
 export interface Pagination {
@@ -20,8 +34,8 @@ export interface Pagination {
 export interface AnimeResponse {
     anime: Anime[];
     pagination: Pagination;
-    types: string[];
-    availableFilters:  Record<string, unknown>;
-    filters:  Record<string, unknown>;
-    filtersList:  Record<string, unknown>;
+    types?: string[];
+    availableFilters?: FiltersMap | Record<string, any>;
+    filters?: FiltersMap | Record<string, any>;
+    filtersList?: FiltersMap | null;
 }

@@ -51,7 +51,13 @@ export interface AdminTableProps {
     deleteUrl?: (id: number, row: AdminTableRow) => string;
 }
 
-export interface CustomAdminTableProps extends AdminTableProps {
+export interface CustomAdminTableProps {
+    columns: AdminTableColumn[];
+    actions: AdminTableActionConfig[];
+    data: AdminTableRow[];
+    from?: number;
+    isModal?: boolean;
+    deleteUrl?: (id: number, row: AdminTableRow) => string;
     modalTitle?: string;
     modalDescription?: string;
     formFields: AdminFormField[];
@@ -62,6 +68,7 @@ export interface CustomAdminTableProps extends AdminTableProps {
     imageUploadUrl?: (id: number) => string;
     createLabel?: string;
     getCreatedId?: (created: any) => number | undefined;
+    filters?: Record<string, { id: number; title: string; visible?: boolean }[]> | null;
 }
 
 export interface AdminTableActionButtonsProps {

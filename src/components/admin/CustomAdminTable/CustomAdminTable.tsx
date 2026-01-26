@@ -45,7 +45,8 @@ const buildPreviewUrlsFromItem = (fields: AdminFormField[], item: Record<string,
     }, {});
 };
 
-const defaultGetCreatedId = (created: any) => created?.data?.id ?? created?.id;
+const defaultGetCreatedId = (created: any) =>
+    created?.anime?.id ?? created?.data?.anime?.id ?? created?.data?.id ?? created?.id;
 const hasValidationErrors = (
     result: { ok: true } | { ok: false; errors: ClientErrors },
 ): result is { ok: false; errors: ClientErrors } => result.ok === false;
@@ -55,9 +56,6 @@ export const CustomAdminTable = ({
     actions,
     data,
     from,
-    onDelete,
-    onView,
-    onEdit,
     isModal,
     deleteUrl,
     modalTitle,
@@ -70,6 +68,7 @@ export const CustomAdminTable = ({
     imageUploadUrl,
     createLabel,
     getCreatedId,
+    filters,
 }: CustomAdminTableProps) => {
     /* ↓↓↓↓↓↓↓↓↓↓↓↓↓ Form block ↓↓↓↓↓↓↓↓↓↓↓↓↓ */
     /* ↓↓↓↓↓↓↓↓↓↓↓↓↓ Form block ↓↓↓↓↓↓↓↓↓↓↓↓↓ */
@@ -80,6 +79,8 @@ export const CustomAdminTable = ({
     const [filePreviewUrls, setFilePreviewUrls] = useState<Record<string, string | null>>({});
     const resolveCreatedId = getCreatedId ?? defaultGetCreatedId;
     const resolveUpdateUrl = updateUrl ?? ((id: number) => `${createUrl}/${id}`);
+    const resolveDeleteUrl = deleteUrl ?? ((id: number) => `${createUrl}/${id}`);
+    const resolveImageUploadUrl = imageUploadUrl ?? ((id: number) => `${createUrl}/${id}/image`);
 
     const initialFormData = useMemo(() => buildInitialFormData(formFields), [formFields]);
     const formSchema = useMemo(() => buildAdminSchema(formFields), [formFields]);
@@ -93,7 +94,6 @@ export const CustomAdminTable = ({
         withProcessing: withProcessing,
         submit: formSubmit,
     } = useApiForm(initialFormData);
-    console.log('form', formData);
 
     const openCreate = () => {
         resetForm(initialFormData);
@@ -121,11 +121,7 @@ export const CustomAdminTable = ({
         setEditingId(item.id);
         setFilePreviewUrls(buildPreviewUrlsFromItem(formFields, item ?? {}));
         setModalOpen(true);
-        setTimeout(
-            () =>
-                setIsValid(formSchema.safeParse(itemValues).success),
-            0,
-        );
+        setTimeout(() => setIsValid(formSchema.safeParse(itemValues).success), 0);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -148,11 +144,11 @@ export const CustomAdminTable = ({
                 const createdId = resolveCreatedId(created);
 
                 // Upload media after create
-                if (formData.image && createdId && imageUploadUrl) {
+                if (formData.image && createdId && resolveImageUploadUrl) {
                     setUploadingImage(true);
                     try {
                         const imageRes = await uploadImage(
-                            imageUploadUrl(createdId),
+                            resolveImageUploadUrl(createdId),
                             formData.image as File,
                         );
                         if (imageRes?.message) toast.success(imageRes.message);
@@ -176,18 +172,20 @@ export const CustomAdminTable = ({
                 }
                 setFormErrorsZod({});
 
-                const updated = await formSubmit(resolveUpdateUrl(editingId), updateMethod ?? 'put', {
-                    onSuccess: () => {},
-                });
+                const updated = await formSubmit(
+                    resolveUpdateUrl(editingId),
+                    updateMethod ?? 'put',
+                    { onSuccess: () => {} },
+                );
                 if (updated?.message) toast.success(updated.message);
 
                 const updatedId = resolveCreatedId(updated) ?? editingId;
 
-                if (formData.image && updatedId && imageUploadUrl) {
+                if (formData.image && updatedId && resolveImageUploadUrl) {
                     setUploadingImage(true);
                     try {
                         const imageRes = await uploadImage(
-                            imageUploadUrl(updatedId),
+                            resolveImageUploadUrl(updatedId),
                             formData.image as File,
                         );
                         if (imageRes?.message) toast.success(imageRes.message);
@@ -203,7 +201,6 @@ export const CustomAdminTable = ({
         };
         withProcessing(run);
     };
-
 
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Form block ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Form block ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
@@ -241,7 +238,7 @@ export const CustomAdminTable = ({
     };
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Clients errors ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Clients errors ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
-    
+
     const handleDelete = async (id: number, url: string) => {
         if (!url) return;
         const confirmed = window.confirm('Delete this item?');
@@ -263,17 +260,23 @@ export const CustomAdminTable = ({
                 actions={actions}
                 columns={columns}
                 isModal={isModal}
-                onView={onView ?? ((el) => openView(el))}
-                onDelete={onDelete ?? handleDelete}
+                onView={(el) => openView(el)}
+                onDelete={handleDelete}
                 onEdit={(el) => openEdit(el)}
                 data={data}
                 from={from}
-                deleteUrl={deleteUrl}
+                deleteUrl={resolveDeleteUrl}
             />
             <CustomModalForm
                 open={modalOpen}
                 onOpenChange={setModalOpen}
-                title={modalTitle}
+                title={
+                    mode === 'view'
+                        ? 'View ' + modalTitle
+                        : mode === 'edit'
+                          ? 'Edit ' + modalTitle
+                          : 'Create ' + modalTitle
+                }
                 description={modalDescription}
                 fields={formFields}
                 data={formData}
@@ -289,6 +292,7 @@ export const CustomAdminTable = ({
                 onSubmit={handleSubmit}
                 submitLabel={mode === 'edit' ? 'Save' : 'Create'}
                 isValid={isValid}
+                filters={filters}
             />
         </>
     );
