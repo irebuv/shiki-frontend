@@ -22,7 +22,7 @@ export default function NavLinks({onClick, links, className}: LinksProps){
                     key={link.title}
                     to={link.href}
                     onClick={onClick}
-                    className="block hover:text-chart-1 mt-1"
+                    className="block hover:text-chart-1 mt-2"
                 >
                     <span className="flex items-center gap-2">
                         {link.icon && <link.icon className="h-4 w-4" />}

@@ -20,7 +20,7 @@ export default function AdminTable({
     const { lines, setLines } = useDescriptionLines<DescriptionLines>(5);
     return (
         <div className="size-full overflow-auto rounded-lg border bg-background shadow-sm">
-            <table className="size-full table-auto border-separate border-spacing-0 bg-background">
+            <table className="w-full table-auto border-separate border-spacing-0 bg-background">
                 <thead className="sticky top-0 z-10 bg-background shadow-sm">
                     <tr className="text-foreground">
                         <th className="border p-4 text-center">#</th>
@@ -57,7 +57,9 @@ export default function AdminTable({
                                             col.className ?? ''
                                         }`}
                                     >
-                                        {col.isImage ? (
+                                        {col.render ? (
+                                            col.render(row)
+                                        ) : col.isImage ? (
                                             <div className="flex justify-center">
                                                 {row[col.key] ? (
                                                     <img

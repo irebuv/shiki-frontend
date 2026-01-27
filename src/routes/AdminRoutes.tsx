@@ -5,6 +5,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import AdminPanel from '@/pages/admin/AdminPage';
 import AnimeAdminPage from '@/pages/admin/anime/AnimeAdminPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import FilterAdminPage from '@/pages/admin/filter/FilterAdminPage';
 
 // Single protected parent; all children under /admin/* inherit the guard
 export const AdminRoutes: RouteObject = {
@@ -28,6 +29,10 @@ export const AdminRoutes: RouteObject = {
         {
             path: 'anime',
             element: <AnimeAdminPage />,
+        },
+        {
+            path: 'filter',
+            element: <FilterAdminPage />,
         },
         { path: '*', element: <NotFoundPage /> }
         // add more admin child routes here; they will be protected automatically

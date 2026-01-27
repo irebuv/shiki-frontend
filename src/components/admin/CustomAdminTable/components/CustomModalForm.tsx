@@ -25,6 +25,12 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { DESCRIPTION_LINE_OPTIONS } from '@/lib/descriptionLines';
 import { AnimeAdminFilters } from '../../AdminFilters/AnimeAdminFilters';
 
+type FilterListItem = {
+    id?: number;
+    title?: string;
+    visible?: boolean;
+};
+
 export default function CustomModalForm({
     open,
     onOpenChange,
@@ -52,7 +58,6 @@ export default function CustomModalForm({
         'modal.description.rows',
         6,
     );
-    console.log('filter', filters)
     const fileFieldName = useMemo(() => {
         const fileField = fields?.find((field) => field.type === 'file');
         return fileField?.name ?? null;
@@ -94,6 +99,26 @@ export default function CustomModalForm({
         if (file && file.type.startsWith('image/')) {
             setData(fieldName, file);
         }
+    };
+
+    const normalizeFilterList = (value: unknown): FilterListItem[] => {
+        const list = Array.isArray(value) ? (value as FilterListItem[]) : [];
+        const trimmed = list.map((item) => ({
+            id: item.id,
+            title: item.title ?? '',
+            visible: item.visible ?? true,
+        }));
+
+        if (trimmed.length === 0) {
+            return [{ title: '', visible: true }];
+        }
+
+        const last = trimmed[trimmed.length - 1];
+        if ((last.title ?? '').trim() !== '') {
+            return [...trimmed, { title: '', visible: true }];
+        }
+
+        return trimmed;
     };
 
     return (
@@ -146,6 +171,124 @@ export default function CustomModalForm({
                                             setData(f.name, e.target.value);
                                         }}
                                     />
+                                ) : f.type === 'select' ? (
+                                    <Select
+                                        value={
+                                            data[f.name] === undefined || data[f.name] === null
+                                                ? undefined
+                                                : String(data[f.name])
+                                        }
+                                        onValueChange={(value) => {
+                                            if (readOnly) return;
+                                            const nextValue = f.parseAsNumber
+                                                ? Number(value)
+                                                : value;
+                                            setData(f.name, nextValue);
+                                        }}
+                                        disabled={readOnly}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={`Select ${f.label}`} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(f.options ?? []).map((option) => (
+                                                <SelectItem
+                                                    key={String(option.value)}
+                                                    value={String(option.value)}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : f.type === 'filter-list' ? (
+                                    <div className="space-y-3 rounded-lg border p-3">
+                                        {normalizeFilterList(data[f.name]).map((item, index) => {
+                                            const items = normalizeFilterList(data[f.name]);
+                                            const isLast = index === items.length - 1;
+                                            const isBlank = (item.title ?? '').trim() === '';
+                                            const inputId = `${f.id}-visible-${index}`;
+
+                                            const updateItems = (nextItems: FilterListItem[]) => {
+                                                if (readOnly) return;
+                                                setData(f.name, normalizeFilterList(nextItems));
+                                            };
+
+                                            const handleTitleChange = (value: string) => {
+                                                const next = [...items];
+                                                next[index] = {
+                                                    ...next[index],
+                                                    title: value,
+                                                };
+                                                updateItems(next);
+                                            };
+
+                                            const handleToggleVisible = () => {
+                                                const next = [...items];
+                                                const currentVisible = next[index]?.visible ?? true;
+                                                next[index] = {
+                                                    ...next[index],
+                                                    visible: !currentVisible,
+                                                };
+                                                updateItems(next);
+                                            };
+
+                                            const handleRemove = () => {
+                                                const next = items.filter((_, i) => i !== index);
+                                                updateItems(next);
+                                            };
+
+                                            return (
+                                                <div
+                                                    key={item.id ?? `new-${index}`}
+                                                    className="rounded-md border p-3"
+                                                >
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <div className="filter-checks">
+                                                                <Input
+                                                                    id={inputId}
+                                                                    className="demo1"
+                                                                    type="checkbox"
+                                                                    checked={item.visible ?? true}
+                                                                    disabled={readOnly}
+                                                                    onChange={handleToggleVisible}
+                                                                />
+                                                                <Label
+                                                                    htmlFor={inputId}
+                                                                    data-on-label="ON"
+                                                                    data-off-label="OFF"
+                                                                />
+                                                            </div>
+                                                            {!readOnly && !(isLast && isBlank) && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    className="h-9 px-3"
+                                                                    onClick={handleRemove}
+                                                                >
+                                                                    Remove
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                        <Input
+                                                            value={item.title ?? ''}
+                                                            placeholder="Filter title"
+                                                            readOnly={readOnly}
+                                                            onChange={(e) =>
+                                                                handleTitleChange(e.target.value)
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {!readOnly && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Fill a row to automatically add the next one.
+                                            </p>
+                                        )}
+                                    </div>
                                 ) : f.type === 'file' ? (
                                     <div className="flex flex-col space-y-3">
                                         <Label

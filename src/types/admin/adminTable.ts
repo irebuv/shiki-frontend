@@ -1,5 +1,6 @@
 import type * as LucideIcons from 'lucide-react';
 import type { ZodTypeAny } from 'zod';
+import type { ReactNode } from 'react';
 
 export interface AdminTableColumn {
     label: string;
@@ -9,6 +10,7 @@ export interface AdminTableColumn {
     isGallery?: boolean;
     className?: string;
     type?: string;
+    render?: (row: AdminTableRow) => ReactNode;
 }
 
 export interface AdminTableRow {
@@ -26,7 +28,19 @@ export interface AdminTableActionConfig {
     method?: 'link' | 'delete' | 'button';
 }
 
-export type AdminFormFieldType = 'text' | 'textarea' | 'select' | 'file' | (string & {});
+export type AdminFormFieldType =
+    | 'text'
+    | 'textarea'
+    | 'select'
+    | 'file'
+    | 'filters'
+    | 'filter-list'
+    | (string & {});
+
+export interface AdminFormFieldOption {
+    value: string | number;
+    label: string;
+}
 
 export interface AdminFormField {
     id: string;
@@ -37,6 +51,9 @@ export interface AdminFormField {
     getValue?: (item: Record<string, any>) => unknown;
     validation?: ZodTypeAny | false;
     previewUrl?: (item: Record<string, any>) => string | null;
+    options?: AdminFormFieldOption[];
+    parseAsNumber?: boolean;
+    sanitize?: (value: unknown) => unknown;
 }
 
 export interface AdminTableProps {

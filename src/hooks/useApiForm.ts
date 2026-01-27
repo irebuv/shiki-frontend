@@ -32,12 +32,17 @@ export function useApiForm<T extends Record<string, any>>(initial: T) {
     const submit = async (
         url: string,
         method: "post" | "put" | "patch" | "delete" = "post",
-        options?: {onSuccess?: (res: any) => void; asFormData?: boolean}
+        options?: {
+            onSuccess?: (res: any) => void;
+            asFormData?: boolean;
+            dataOverride?: Record<string, any>;
+        }
     ) => {
         setProcessing(true);
         setErrors({});
 
         try {
+            const submitData = (options?.dataOverride ?? data) as Record<string, any>;
             let payload: any = null;
             const headers: Record<string, string> = {};
 
@@ -45,7 +50,7 @@ export function useApiForm<T extends Record<string, any>>(initial: T) {
                 const form = new FormData();
 
                 // append all fields
-                Object.entries(data).forEach(([k, v]) => {
+                Object.entries(submitData).forEach(([k, v]) => {
                     if (v === undefined || v === null) return;
                     if (v instanceof File) {
                         form.append(k, v);
@@ -65,7 +70,7 @@ export function useApiForm<T extends Record<string, any>>(initial: T) {
 
                 payload = form;
             } else {
-                payload = data;
+                payload = submitData;
                 headers["Content-Type"] = "application/json";
             }
 

@@ -24,6 +24,15 @@ const buildInitialFormData = (fields: AdminFormField[]) => {
     }, {});
 };
 
+const sanitizeFormData = (fields: AdminFormField[], data: Record<string, any>) => {
+    const next = { ...data };
+    fields.forEach((field) => {
+        if (!field.sanitize) return;
+        next[field.name] = field.sanitize(next[field.name]);
+    });
+    return next;
+};
+
 const buildFormDataFromItem = (fields: AdminFormField[], item: Record<string, any>) => {
     return fields.reduce<Record<string, any>>((acc, field) => {
         if (field.type === 'file') {
@@ -121,15 +130,19 @@ export const CustomAdminTable = ({
         setEditingId(item.id);
         setFilePreviewUrls(buildPreviewUrlsFromItem(formFields, item ?? {}));
         setModalOpen(true);
-        setTimeout(() => setIsValid(formSchema.safeParse(itemValues).success), 0);
+        setTimeout(() => {
+            const sanitized = sanitizeFormData(formFields, itemValues);
+            setIsValid(formSchema.safeParse(sanitized).success);
+        }, 0);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         const run = async () => {
+            const sanitizedFormData = sanitizeFormData(formFields, formData);
             if (mode === 'create') {
-                const result = validateWithZod(formSchema, formData);
+                const result = validateWithZod(formSchema, sanitizedFormData);
                 if (hasValidationErrors(result)) {
                     setFormErrorsZod(result.errors);
                     return;
@@ -139,6 +152,7 @@ export const CustomAdminTable = ({
                 // Create new copy (JSON, Not form-data)
                 const created = await formSubmit(createUrl, 'post', {
                     onSuccess: () => {},
+                    dataOverride: sanitizedFormData,
                 });
                 if (created?.message) toast.success(created.message);
                 const createdId = resolveCreatedId(created);
@@ -165,7 +179,7 @@ export const CustomAdminTable = ({
             if (mode === 'edit') {
                 if (!editingId) return;
 
-                const result = validateWithZod(formSchema, formData);
+                const result = validateWithZod(formSchema, sanitizedFormData);
                 if (hasValidationErrors(result)) {
                     setFormErrorsZod(result.errors);
                     return;
@@ -175,7 +189,10 @@ export const CustomAdminTable = ({
                 const updated = await formSubmit(
                     resolveUpdateUrl(editingId),
                     updateMethod ?? 'put',
-                    { onSuccess: () => {} },
+                    {
+                        onSuccess: () => {},
+                        dataOverride: sanitizedFormData,
+                    },
                 );
                 if (updated?.message) toast.success(updated.message);
 
@@ -219,7 +236,9 @@ export const CustomAdminTable = ({
     ) => {
         const shape = schema.shape?.[name];
         if (!shape) return null;
-        const result = shape.safeParse(value);
+        const field = formFields.find((f) => f.name === name);
+        const sanitizedValue = field?.sanitize ? field.sanitize(value) : value;
+        const result = shape.safeParse(sanitizedValue);
         return result.success ? null : result.error.issues[0].message;
     };
 
@@ -230,10 +249,12 @@ export const CustomAdminTable = ({
             ...prev,
             [name]: err ?? '',
         }));
-        const allValid = formSchema.safeParse({
+        const nextData = {
             ...formData,
             [name]: value,
-        }).success;
+        };
+        const sanitizedNextData = sanitizeFormData(formFields, nextData);
+        const allValid = formSchema.safeParse(sanitizedNextData).success;
         setIsValid(allValid);
     };
     /* ↑↑↑↑↑↑↑↑↑↑↑↑↑ Clients errors ↑↑↑↑↑↑↑↑↑↑↑↑↑ */
