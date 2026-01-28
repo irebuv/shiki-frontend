@@ -34,7 +34,7 @@ export interface Pagination {
 export interface AnimeResponse {
     anime: Anime[];
     pagination: Pagination;
-    types?: string[];
+    type?: string[];
     availableFilters?: FiltersMap | Record<string, any>;
     filters?: FiltersMap | Record<string, any>;
     filtersList?: FiltersMap | null;

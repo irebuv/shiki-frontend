@@ -15,7 +15,11 @@ export function useQueryData<TData, TFilters extends Record<string, any>>({
         Object.entries(paramsObj).forEach(([key, value]) => {
             if (value === undefined || value === null || value === '') return;
             if (Array.isArray(value)) {
-                value.forEach((v) => searchParams.append(`${key}[]`, String(v)));
+                if (value.length === 0) return;
+                value.forEach((v) => {
+                    if (v === undefined || v === null || v === '') return;
+                    searchParams.append(`${key}[]`, String(v));
+                });
             } else {
                 searchParams.append(key, String(value));
             }

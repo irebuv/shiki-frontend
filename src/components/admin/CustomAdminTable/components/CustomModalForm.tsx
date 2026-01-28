@@ -20,15 +20,17 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { DESCRIPTION_LINE_OPTIONS } from '@/lib/descriptionLines';
 import { AnimeAdminFilters } from '../../AdminFilters/AnimeAdminFilters';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 
 type FilterListItem = {
     id?: number;
     title?: string;
     visible?: boolean;
+    clientId?: string;
 };
 
 export default function CustomModalForm({
@@ -58,6 +60,8 @@ export default function CustomModalForm({
         'modal.description.rows',
         6,
     );
+    const filterClientIdCounterRef = useRef(0);
+    const placeholderClientIdsRef = useRef<Record<string, string>>({});
     const fileFieldName = useMemo(() => {
         const fileField = fields?.find((field) => field.type === 'file');
         return fileField?.name ?? null;
@@ -101,25 +105,61 @@ export default function CustomModalForm({
         }
     };
 
-    const normalizeFilterList = (value: unknown): FilterListItem[] => {
+    const nextFilterClientId = () => {
+        filterClientIdCounterRef.current += 1;
+        return `tmp-filter-${filterClientIdCounterRef.current}`;
+    };
+
+    const ensurePlaceholderClientId = (fieldName: string, nonBlank: FilterListItem[]) => {
+        const current = placeholderClientIdsRef.current[fieldName];
+        if (!current || nonBlank.some((item) => item.clientId === current)) {
+            placeholderClientIdsRef.current[fieldName] = nextFilterClientId();
+        }
+        return placeholderClientIdsRef.current[fieldName];
+    };
+
+    const normalizeFilterList = (value: unknown, fieldName: string): FilterListItem[] => {
         const list = Array.isArray(value) ? (value as FilterListItem[]) : [];
-        const trimmed = list.map((item) => ({
+
+        const withStableIds = list.map((item) => ({
             id: item.id,
             title: item.title ?? '',
             visible: item.visible ?? true,
+            clientId: item.clientId ?? (!item.id ? nextFilterClientId() : undefined),
         }));
 
-        if (trimmed.length === 0) {
-            return [{ title: '', visible: true }];
+        const isBlank = (item: FilterListItem) => (item.title ?? '').trim() === '';
+        const nonBlank = withStableIds.filter((item) => !isBlank(item));
+        const blankItem = withStableIds.find(isBlank);
+
+        if (blankItem?.clientId) {
+            placeholderClientIdsRef.current[fieldName] = blankItem.clientId;
         }
 
-        const last = trimmed[trimmed.length - 1];
-        if ((last.title ?? '').trim() !== '') {
-            return [...trimmed, { title: '', visible: true }];
+        const placeholderId = ensurePlaceholderClientId(fieldName, nonBlank);
+        const placeholder: FilterListItem = blankItem ?? {
+            title: '',
+            visible: true,
+            clientId: placeholderId,
+        };
+
+        if (nonBlank.length === 0) {
+            return [placeholder];
         }
 
-        return trimmed;
+        return [...nonBlank, placeholder];
     };
+
+    const gentleSpring = {
+        type: 'spring',
+        stiffness: 260,
+        damping: 26,
+        mass: 0.85,
+    } as const;
+    const listLayoutTransition = {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+    } as const;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange} modal>
@@ -202,93 +242,211 @@ export default function CustomModalForm({
                                         </SelectContent>
                                     </Select>
                                 ) : f.type === 'filter-list' ? (
-                                    <div className="space-y-3 rounded-lg border p-3">
-                                        {normalizeFilterList(data[f.name]).map((item, index) => {
-                                            const items = normalizeFilterList(data[f.name]);
-                                            const isLast = index === items.length - 1;
-                                            const isBlank = (item.title ?? '').trim() === '';
-                                            const inputId = `${f.id}-visible-${index}`;
-
+                                    <motion.div
+                                        layout
+                                        transition={{ layout: listLayoutTransition }}
+                                        className="space-y-3 rounded-lg border p-3"
+                                    >
+                                        {(() => {
+                                            const items = normalizeFilterList(data[f.name], f.name);
                                             const updateItems = (nextItems: FilterListItem[]) => {
                                                 if (readOnly) return;
-                                                setData(f.name, normalizeFilterList(nextItems));
-                                            };
-
-                                            const handleTitleChange = (value: string) => {
-                                                const next = [...items];
-                                                next[index] = {
-                                                    ...next[index],
-                                                    title: value,
-                                                };
-                                                updateItems(next);
-                                            };
-
-                                            const handleToggleVisible = () => {
-                                                const next = [...items];
-                                                const currentVisible = next[index]?.visible ?? true;
-                                                next[index] = {
-                                                    ...next[index],
-                                                    visible: !currentVisible,
-                                                };
-                                                updateItems(next);
-                                            };
-
-                                            const handleRemove = () => {
-                                                const next = items.filter((_, i) => i !== index);
-                                                updateItems(next);
+                                                setData(
+                                                    f.name,
+                                                    normalizeFilterList(nextItems, f.name),
+                                                );
                                             };
 
                                             return (
-                                                <div
-                                                    key={item.id ?? `new-${index}`}
-                                                    className="rounded-md border p-3"
-                                                >
-                                                    <div className="flex flex-col gap-2">
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <div className="filter-checks">
-                                                                <Input
-                                                                    id={inputId}
-                                                                    className="demo1"
-                                                                    type="checkbox"
-                                                                    checked={item.visible ?? true}
-                                                                    disabled={readOnly}
-                                                                    onChange={handleToggleVisible}
-                                                                />
-                                                                <Label
-                                                                    htmlFor={inputId}
-                                                                    data-on-label="ON"
-                                                                    data-off-label="OFF"
-                                                                />
-                                                            </div>
-                                                            {!readOnly && !(isLast && isBlank) && (
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    className="h-9 px-3"
-                                                                    onClick={handleRemove}
-                                                                >
-                                                                    Remove
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                        <Input
-                                                            value={item.title ?? ''}
-                                                            placeholder="Filter title"
-                                                            readOnly={readOnly}
-                                                            onChange={(e) =>
-                                                                handleTitleChange(e.target.value)
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
+                                                <LayoutGroup>
+                                                    <motion.div
+                                                        layout
+                                                        transition={gentleSpring}
+                                                        className="space-y-3"
+                                                    >
+                                                        <AnimatePresence initial={false}>
+                                                            {items.map((item, index) => {
+                                                                const isLast =
+                                                                    index === items.length - 1;
+                                                                const isBlank =
+                                                                    (item.title ?? '').trim() ===
+                                                                    '';
+                                                                const isPlaceholder =
+                                                                    isLast && isBlank && !item.id;
+                                                                const inputId = `${f.id}-visible-${index}`;
+                                                                const rowKey =
+                                                                    item.id !== undefined
+                                                                        ? `filter-${item.id}`
+                                                                        : (item.clientId ??
+                                                                          `filter-new-${index}`);
+
+                                                                const handleTitleChange = (
+                                                                    value: string,
+                                                                ) => {
+                                                                    const next = [...items];
+                                                                    next[index] = {
+                                                                        ...next[index],
+                                                                        title: value,
+                                                                    };
+                                                                    updateItems(next);
+                                                                };
+
+                                                                const handleToggleVisible = () => {
+                                                                    const next = [...items];
+                                                                    const currentVisible =
+                                                                        next[index]?.visible ??
+                                                                        true;
+                                                                    next[index] = {
+                                                                        ...next[index],
+                                                                        visible: !currentVisible,
+                                                                    };
+                                                                    updateItems(next);
+                                                                };
+
+                                                                const handleRemove = () => {
+                                                                    const next = items.filter(
+                                                                        (_, i) => i !== index,
+                                                                    );
+                                                                    updateItems(next);
+                                                                };
+
+                                                                const layoutTransition =
+                                                                    isPlaceholder
+                                                                        ? {
+                                                                              ...gentleSpring,
+                                                                              stiffness: 120,
+                                                                              damping: 32,
+                                                                              mass: 1.25,
+                                                                          }
+                                                                        : gentleSpring;
+
+                                                                const fadeDuration = isPlaceholder
+                                                                    ? 0.9
+                                                                    : 0.22;
+                                                                const fadeDelay = isPlaceholder
+                                                                    ? 0.08
+                                                                    : 0;
+
+                                                                return (
+                                                                    <motion.div
+                                                                        key={rowKey}
+                                                                        layout="position"
+                                                                        layoutId={`filter-row-${rowKey}`}
+                                                                        initial={{
+                                                                            opacity: 0,
+                                                                            height: 0,
+                                                                        }}
+                                                                        animate={{
+                                                                            opacity: 1,
+                                                                            height: 'auto',
+                                                                        }}
+                                                                        exit={{
+                                                                            opacity: 0,
+                                                                            height: 0,
+                                                                        }}
+                                                                        transition={{
+                                                                            layout: layoutTransition,
+                                                                            height: {
+                                                                                duration:
+                                                                                    isPlaceholder
+                                                                                        ? 0.9
+                                                                                        : 0.45,
+                                                                                ease: [
+                                                                                    0.22, 1, 0.36,
+                                                                                    1,
+                                                                                ],
+                                                                                delay: fadeDelay,
+                                                                            },
+                                                                            opacity: {
+                                                                                duration:
+                                                                                    fadeDuration,
+                                                                                ease: 'easeOut',
+                                                                                delay: fadeDelay,
+                                                                            },
+                                                                        }}
+                                                                        className="overflow-hidden"
+                                                                    >
+                                                                        <div className="rounded-md border p-3">
+                                                                            <div className="flex flex-col gap-2">
+                                                                                <div className="flex items-center justify-between gap-3">
+                                                                                    <div className="filter-checks">
+                                                                                        <Input
+                                                                                            id={
+                                                                                                inputId
+                                                                                            }
+                                                                                            className="demo1"
+                                                                                            type="checkbox"
+                                                                                            checked={
+                                                                                                item.visible ??
+                                                                                                true
+                                                                                            }
+                                                                                            disabled={
+                                                                                                readOnly
+                                                                                            }
+                                                                                            onChange={
+                                                                                                handleToggleVisible
+                                                                                            }
+                                                                                        />
+                                                                                        <Label
+                                                                                            htmlFor={
+                                                                                                inputId
+                                                                                            }
+                                                                                            data-on-label="ON"
+                                                                                            data-off-label="OFF"
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="mr-auto text-muted-foreground/40">
+                                                                                        (visibility)
+                                                                                    </div>
+                                                                                    {!readOnly &&
+                                                                                        !(
+                                                                                            isLast &&
+                                                                                            isBlank
+                                                                                        ) && (
+                                                                                            <Button
+                                                                                                type="button"
+                                                                                                variant="outline"
+                                                                                                className="h-9 px-3"
+                                                                                                onClick={
+                                                                                                    handleRemove
+                                                                                                }
+                                                                                            >
+                                                                                                Remove
+                                                                                            </Button>
+                                                                                        )}
+                                                                                </div>
+                                                                                <Input
+                                                                                    value={
+                                                                                        item.title ??
+                                                                                        ''
+                                                                                    }
+                                                                                    placeholder="Filter title"
+                                                                                    readOnly={
+                                                                                        readOnly
+                                                                                    }
+                                                                                    onChange={(e) =>
+                                                                                        handleTitleChange(
+                                                                                            e.target
+                                                                                                .value,
+                                                                                        )
+                                                                                    }
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                );
+                                                            })}
+                                                        </AnimatePresence>
+                                                    </motion.div>
+                                                </LayoutGroup>
                                             );
-                                        })}
+                                        })()}
                                         {!readOnly && (
                                             <p className="text-xs text-muted-foreground">
                                                 Fill a row to automatically add the next one.
                                             </p>
                                         )}
-                                    </div>
+                                    </motion.div>
                                 ) : f.type === 'file' ? (
                                     <div className="flex flex-col space-y-3">
                                         <Label
@@ -386,7 +544,9 @@ export default function CustomModalForm({
                                     <div>
                                         <AnimeAdminFilters
                                             filters={filters}
-                                            value={Array.isArray(data?.[f.name]) ? data[f.name] : []}
+                                            value={
+                                                Array.isArray(data?.[f.name]) ? data[f.name] : []
+                                            }
                                             onChange={(next) => {
                                                 if (readOnly) return;
                                                 setData(f.name, next);

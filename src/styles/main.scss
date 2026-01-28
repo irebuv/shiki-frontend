@@ -1,18 +1,12 @@
 :root {
-    --admin-filter-card-bg: #fff;
     --admin-filter-header-bg: #f7f9ff;
     --admin-filter-border: #e3e7f1;
     --admin-filter-divider: #e6e6e6;
-    --admin-filter-shadow: rgba(0, 0, 0, 0.02);
-    --admin-filter-accent: #3b61f3;
     --admin-filter-text-muted: #7a8195;
-    --admin-filter-danger: #e03a3a;
     --admin-filter-toggle-off: #ccc;
     --admin-filter-toggle-on: #3498db;
-    --admin-filter-toggle-thumb: #fff;
     --admin-filter-toggle-thumb-on: #f7f7f7;
     --admin-filter-toggle-text-off: #999;
-    --admin-filter-toggle-text-on: #fff;
 }
 
 .current-filter {
@@ -55,7 +49,7 @@
 .admin-filters-toggle {
     justify-self: start;
     border: 1px solid var(--admin-filter-border);
-    background: var(--admin-filter-card-bg);
+    background: var(--color-background);
     color: var(--admin-filter-text-muted);
     padding: 6px 12px;
     border-radius: 8px;
@@ -107,7 +101,7 @@
     border: 1px solid var(--admin-filter-border);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 1px 0 var(--admin-filter-shadow);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
 .admin-filter-header {
@@ -119,7 +113,7 @@
         margin: 0;
         font-size: 14px;
         font-weight: 600;
-        color: var(--admin-filter-accent);
+        color: var(--chart-3);
     }
 }
 
@@ -150,7 +144,7 @@
 
 .admin-filter-note {
     font-size: 12px;
-    color: var(--admin-filter-danger);
+    color: var(--color-destructive);
     text-align: center;
 }
 
@@ -198,7 +192,7 @@
     left: 3px;
     width: 24px;
     height: 24px;
-    background-color: var(--admin-filter-toggle-thumb);
+    background-color: var(--color-background);
     border-radius: 50%;
 }
 
@@ -206,7 +200,7 @@
     content: attr(data-on-label);
     left: 14px;
     right: auto;
-    color: var(--admin-filter-toggle-text-on);
+    color: var(--color-background);
 }
 
 .filter-checks input:checked + label::after {
@@ -223,9 +217,9 @@
 }
 
 .filter-checks .demo1:checked + label {
-    background-color: var(--admin-filter-toggle-on);
+    background-color: var(--chart-4);
 }
 
 .filter-checks .demo1:checked + label::before {
-    color: var(--admin-filter-toggle-text-on);
+    color: var(--color-background);
 }

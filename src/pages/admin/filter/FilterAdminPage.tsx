@@ -24,9 +24,6 @@ export default function FilterAdminPage() {
 
     const handleDeleteFilter = useCallback(
         async (filterId: number) => {
-            const confirmed = window.confirm('Delete this filter?');
-            if (!confirmed) return;
-
             const existingTimer = pendingDeleteTimersRef.current.get(filterId);
             if (existingTimer) {
                 window.clearTimeout(existingTimer);
@@ -42,12 +39,12 @@ export default function FilterAdminPage() {
                     pendingDeleteTimersRef.current.delete(filterId);
                     refetch?.();
                 }
-            }, 5000);
+            }, 10000);
 
             pendingDeleteTimersRef.current.set(filterId, timerId);
 
-            toast('Filter will be deleted in 5 seconds', {
-                duration: 5000,
+            toast('Filter will be deleted in 10 seconds', {
+                duration: 10000,
                 action: {
                     label: 'Undo',
                     onClick: () => {

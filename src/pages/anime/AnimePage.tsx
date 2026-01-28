@@ -8,16 +8,17 @@ import AnimeFilters from './component/AnimeFilters';
 export default function AnimePage() {
     const { data, filters, setFilters } = useQueryData<
         AnimeResponse,
-        { page: number; sort: string; type: string; filters: string[] | string }
+        { page: number; sort: string; type?: string[]; filters: string[] | string }
     >({
         url: '/anime',
         initial: {
             page: 1,
             sort: 'updated_at:desc',
-            type: '',
+            type: undefined,
             filters: [],
         },
     });
+    console.log('data-home', data)
 
     const availableFilters = data?.filtersList ?? data?.filters ?? data?.availableFilters;
     const activeFilters: string[] = Array.isArray(filters?.filters)

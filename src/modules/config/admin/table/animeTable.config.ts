@@ -28,6 +28,37 @@ const formFields: AdminFormField[] = [
         validation: z.string().trim().min(1, 'Min 1 chars').max(120, 'Max 120 chars'),
     },
     {
+        id: 'type',
+        name: 'type',
+        label: 'Type',
+        type: 'select',
+        defaultValue: '',
+        options: [
+            { value: 'tv_short', label: 'TV Short' },
+            { value: 'tv_medium', label: 'TV Medium' },
+            { value: 'tv_long', label: 'TV Long' },
+            { value: 'movie', label: 'Movie' },
+            { value: 'ova', label: 'OVA' },
+            { value: 'ona', label: 'ONA' },
+        ],
+        validation: z
+            .string()
+            .optional()
+            .refine(
+                (value) =>
+                    value === '' ||
+                    [
+                        'tv_short',
+                        'tv_medium',
+                        'tv_long',
+                        'movie',
+                        'ova',
+                        'ona',
+                    ].includes(value),
+                'Select a valid type',
+            ),
+    },
+    {
         id: 'filter_ids',
         name: 'filter_ids',
         label: 'Filters',
