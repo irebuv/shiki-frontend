@@ -2,10 +2,7 @@
 import { Outlet, RouteObject } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import AdminLayout from '@/components/layout/AdminLayout';
-import AdminPanel from '@/pages/admin/AdminPage';
-import AnimeAdminPage from '@/pages/admin/anime/AnimeAdminPage';
-import NotFoundPage from '@/pages/NotFoundPage';
-import FilterAdminPage from '@/pages/admin/filter/FilterAdminPage';
+import { adminRoutes } from './adminRoutes.config';
 
 // Single protected parent; all children under /admin/* inherit the guard
 export const AdminRoutes: RouteObject = {
@@ -17,24 +14,15 @@ export const AdminRoutes: RouteObject = {
             </AdminLayout>
         </ProtectedRoute>
     ),
-    children: [
-        {
-            index: true,
-            element: <AdminPanel />,
-        },
-        {
-            path: 'user',
-            element: <AdminPanel />,
-        },
-        {
-            path: 'anime',
-            element: <AnimeAdminPage />,
-        },
-        {
-            path: 'filter',
-            element: <FilterAdminPage />,
-        },
-        { path: '*', element: <NotFoundPage /> }
-        // add more admin child routes here; they will be protected automatically
-    ],
+    children: adminRoutes
+        .filter((item) => item.route !== false)
+        .map((item) => ({
+            index: item.index,
+            path: item.index
+                ? undefined
+                : item.path
+                  ? item.path.replace(/^\/admin\/?/, '')
+                  : undefined,
+            element: item.element,
+        })),
 };

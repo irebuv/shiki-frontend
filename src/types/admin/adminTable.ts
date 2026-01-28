@@ -53,6 +53,7 @@ export interface AdminFormField {
     previewUrl?: (item: Record<string, any>) => string | null;
     options?: AdminFormFieldOption[];
     parseAsNumber?: boolean;
+    emptyValue?: string;
     sanitize?: (value: unknown) => unknown;
 }
 

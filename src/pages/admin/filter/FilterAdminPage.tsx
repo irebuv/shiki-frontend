@@ -79,7 +79,6 @@ export default function FilterAdminPage() {
                 actions={tableConfig.actions}
                 formFields={tableConfig.formFields}
                 modalTitle="Filter group"
-                createLabel="Add filter group"
                 data={data?.filterGroups ?? []}
                 isModal={true}
                 refetch={refetch}

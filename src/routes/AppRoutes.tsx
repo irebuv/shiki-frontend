@@ -1,11 +1,7 @@
-import Anime from '@/pages/anime/AnimePage';
-import Home from '@/pages/HomePage';
-import LoginPage from '@/pages/user/LoginPage';
-import ProtectedRoute from './ProtectedRoute';
 import { AdminRoutes } from './AdminRoutes';
 import MainLayout from '@/components/layout/MainLayout';
 import { Outlet, RouteObject } from 'react-router-dom';
-import NotFoundPage from '@/pages/NotFoundPage';
+import { appRoutesConfig } from './appRoutes.config';
 
 export const appRoutes: RouteObject[] = [
     {
@@ -15,17 +11,17 @@ export const appRoutes: RouteObject[] = [
                 <Outlet />
             </MainLayout>
         ),
-        children: [
-            { index: true, element: <Home /> },
-            {
-                path: 'anime',
-                element: (
-                        <Anime />
-                ),
-            },
-            { path: 'login', element: <LoginPage /> },
-            {path: '*', element: <NotFoundPage />}, // 404
-        ],
+        children: appRoutesConfig
+            .filter((item) => item.route !== false && item.element)
+            .map((item) => ({
+                index: item.index,
+                path: item.index
+                    ? undefined
+                    : item.path
+                      ? item.path.replace(/^\/+/, '')
+                      : undefined,
+                element: item.element,
+            })),
     },
     AdminRoutes,
 ];

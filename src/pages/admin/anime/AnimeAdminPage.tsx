@@ -1,6 +1,6 @@
 import { CustomAdminTable } from '@/components/admin/CustomAdminTable/CustomAdminTable';
 import { useQueryData } from '@/hooks/useQueryData';
-import { animeTableConfig } from '@/modules/config/admin/table/animeTable.config';
+import { buildAnimeTableConfig } from '@/modules/config/admin/table/animeTable.config';
 import { AnimeResponse } from '@/types/anime';
 import { Pagination } from '@/components/custom/Pagination';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
@@ -15,6 +15,11 @@ export default function AnimeAdminPage() {
     });
     console.log("anime", data)
     const from = ((data?.pagination?.current_page ?? 1) - 1) * (data?.pagination?.per_page ?? 0);
+    const studioOptions = (data?.studios ?? []).map((studio) => ({
+        value: studio.id,
+        label: studio.name,
+    }));
+    const animeTableConfig = buildAnimeTableConfig(studioOptions);
 
     return (
         <QueryState
@@ -29,7 +34,6 @@ export default function AnimeAdminPage() {
                 actions={animeTableConfig.actions}
                 formFields={animeTableConfig.formFields}
                 modalTitle="Anime"
-                createLabel="Add new anime"
                 data={data?.anime ?? []}
                 isModal={true}
                 from={from}

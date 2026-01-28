@@ -8,6 +8,11 @@ export type AdminFilterItem = {
 
 export type FiltersMap = Record<string, AdminFilterItem[]>;
 
+export type StudioOption = {
+    id: number;
+    name: string;
+};
+
 export interface Anime {
     id: number;
     name: string;
@@ -38,4 +43,5 @@ export interface AnimeResponse {
     availableFilters?: FiltersMap | Record<string, any>;
     filters?: FiltersMap | Record<string, any>;
     filtersList?: FiltersMap | null;
+    studios?: StudioOption[];
 }

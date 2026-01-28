@@ -5,38 +5,12 @@ import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
 import MenuHeader from './MenuHeader';
-import { Home, LucideProps } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { linksNavMain, linksNavProfile } from '@/routes/appRoutes.config';
 
-type NavLinks = {
-    title: string;
-    href: string;
-    icon?: React.ComponentType<LucideProps>;
-};
 export default function Header() {
     const { user, loading } = useAuth();
     const [scrolled, setScrolled] = useState(false);
-    const linksNav: NavLinks[] = [
-        {
-            title: 'Home',
-            href: '/',
-            icon: Home,
-        },
-        {
-            title: 'Anime',
-            href: '/anime',
-        },
-    ];
-    const linksProfile: NavLinks[] = [
-        {
-            title: 'Home',
-            href: '/',
-        },
-        {
-            title: 'admin',
-            href: '/admin',
-        },
-    ];
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 0);
@@ -61,10 +35,10 @@ export default function Header() {
                 <Link to="/">
                     <Logo />
                 </Link>
-                <MenuHeader links={linksNav} />
+                <MenuHeader links={linksNavMain} />
                <ThemeToggle />
                 {user ? (
-                    <MenuHeader links={linksProfile} title={user.name} hasLogout={true} />
+                    <MenuHeader links={linksNavProfile} title={user.name} hasLogout={true} />
                 ) : (
                     <Link to="/login">Login</Link>
                 )}

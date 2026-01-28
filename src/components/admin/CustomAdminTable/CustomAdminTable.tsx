@@ -54,8 +54,28 @@ const buildPreviewUrlsFromItem = (fields: AdminFormField[], item: Record<string,
     }, {});
 };
 
-const defaultGetCreatedId = (created: any) =>
-    created?.anime?.id ?? created?.data?.anime?.id ?? created?.data?.id ?? created?.id;
+const inferResourceKey = (url: string) => {
+    const clean = url.split('?')[0].replace(/\/+$/, '');
+    const last = clean.split('/').filter(Boolean).pop() ?? '';
+    if (!last) return '';
+    if (last.endsWith('ies')) {
+        return last.slice(0, -3) + 'y';
+    }
+    if (last.endsWith('s') && !last.endsWith('ss')) {
+        return last.slice(0, -1);
+    }
+    return last;
+};
+
+const defaultGetCreatedId = (created: any, createUrl: string) => {
+    const key = inferResourceKey(createUrl);
+    return (
+        (key ? created?.[key]?.id : undefined) ??
+        (key ? created?.data?.[key]?.id : undefined) ??
+        created?.data?.id ??
+        created?.id
+    );
+};
 const hasValidationErrors = (
     result: { ok: true } | { ok: false; errors: ClientErrors },
 ): result is { ok: false; errors: ClientErrors } => result.ok === false;
@@ -86,7 +106,7 @@ export const CustomAdminTable = ({
     const [editingId, setEditingId] = useState<number | null>(null);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [filePreviewUrls, setFilePreviewUrls] = useState<Record<string, string | null>>({});
-    const resolveCreatedId = getCreatedId ?? defaultGetCreatedId;
+    const resolveCreatedId = getCreatedId ?? ((created: any) => defaultGetCreatedId(created, createUrl));
     const resolveUpdateUrl = updateUrl ?? ((id: number) => `${createUrl}/${id}`);
     const resolveDeleteUrl = deleteUrl ?? ((id: number) => `${createUrl}/${id}`);
     const resolveImageUploadUrl = imageUploadUrl ?? ((id: number) => `${createUrl}/${id}/image`);
@@ -275,7 +295,7 @@ export const CustomAdminTable = ({
     return (
         <>
             <Button type="button" onClick={openCreate} className="w-fit">
-                {createLabel ?? 'Add new'}
+                {'Add new ' + modalTitle}
             </Button>
             <AdminTable
                 actions={actions}

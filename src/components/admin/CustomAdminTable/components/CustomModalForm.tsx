@@ -105,6 +105,36 @@ export default function CustomModalForm({
         }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLElement>, fieldName: string) => {
+        if (readOnly) return;
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        const imageItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+        if (!imageItem) return;
+        const file = imageItem.getAsFile();
+        if (!file) return;
+        e.preventDefault();
+        setData(fieldName, file);
+    };
+
+    useEffect(() => {
+        if (!open || readOnly || !fileFieldName) return;
+        const onPaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            const imageItem = Array.from(items).find((item) =>
+                item.type.startsWith('image/'),
+            );
+            if (!imageItem) return;
+            const file = imageItem.getAsFile();
+            if (!file) return;
+            e.preventDefault();
+            setData(fileFieldName, file);
+        };
+        window.addEventListener('paste', onPaste);
+        return () => window.removeEventListener('paste', onPaste);
+    }, [open, readOnly, fileFieldName, setData]);
+
     const nextFilterClientId = () => {
         filterClientIdCounterRef.current += 1;
         return `tmp-filter-${filterClientIdCounterRef.current}`;
@@ -215,14 +245,16 @@ export default function CustomModalForm({
                                     <Select
                                         value={
                                             data[f.name] === undefined || data[f.name] === null
-                                                ? undefined
+                                                ? f.emptyValue ?? undefined
                                                 : String(data[f.name])
                                         }
                                         onValueChange={(value) => {
                                             if (readOnly) return;
-                                            const nextValue = f.parseAsNumber
-                                                ? Number(value)
-                                                : value;
+                                            if (f.emptyValue && value === f.emptyValue) {
+                                                setData(f.name, undefined);
+                                                return;
+                                            }
+                                            const nextValue = f.parseAsNumber ? Number(value) : value;
                                             setData(f.name, nextValue);
                                         }}
                                         disabled={readOnly}
@@ -457,6 +489,10 @@ export default function CustomModalForm({
                                             onDrop={
                                                 readOnly ? undefined : (e) => handleDrop(e, f.name)
                                             }
+                                            onPaste={
+                                                readOnly ? undefined : (e) => handlePaste(e, f.name)
+                                            }
+                                            tabIndex={readOnly ? -1 : 0}
                                             className={`relative w-full cursor-pointer rounded-lg border-2
                                                     border-dashed p-5 text-center text-sm transition
                                                     ${
@@ -493,6 +529,9 @@ export default function CustomModalForm({
                                                     </span>
                                                     <span className="block text-sm text-gray-400 mt-1">
                                                         PNG / JPG, up to 8MB
+                                                    </span>
+                                                    <span className="mt-1 block text-xs text-muted-foreground">
+                                                        Tip: press Ctrl+V to paste from clipboard
                                                     </span>
                                                 </>
                                             )}

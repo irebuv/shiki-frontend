@@ -1,8 +1,10 @@
 import { z } from 'zod';
-import type { AdminFormField } from '@/types/admin/adminTable';
+import type { AdminFormField, AdminFormFieldOption } from '@/types/admin/adminTable';
 import { imageUrl } from '@/lib/imageUrl';
 
-const formFields: AdminFormField[] = [
+const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[] => {
+    const hasStudios = studioOptions.length > 0;
+    return [
     {
         id: 'name',
         name: 'name',
@@ -59,6 +61,22 @@ const formFields: AdminFormField[] = [
             ),
     },
     {
+        id: 'studio_id',
+        name: 'studio_id',
+        label: 'Studio',
+        type: 'select',
+        defaultValue: undefined,
+        options: studioOptions,
+        parseAsNumber: true,
+        sanitize: (value) => (value ? value : undefined),
+        validation: z.preprocess(
+            (value) => (value === '' || value === null ? undefined : value),
+            hasStudios
+                ? z.number().int().positive()
+                : z.number().int().positive().optional(),
+        ),
+    },
+    {
         id: 'filter_ids',
         name: 'filter_ids',
         label: 'Filters',
@@ -85,7 +103,42 @@ const formFields: AdminFormField[] = [
             .refine((f) => !f || /^image\//.test(f.type), 'Only images'),
         previewUrl: (item) => (item?.featured_image ? imageUrl(item.featured_image) : null),
     },
+    ];
+};
+
+const columns = [
+    { label: 'Featured Image', key: 'featured_image', isImage: true, className: 'border p-4' },
+    { label: 'Product Name', key: 'name', className: 'border w-90 p-4' },
+    { label: 'Description', key: 'description', className: 'border p-4 w-1/3' },
+    { label: 'Rate', key: 'rating', className: 'border p-4' },
+    { label: 'Created Date', key: 'created_at', className: 'border p-4 text-center' },
+    { label: 'Updated Date', key: 'updated_at', className: 'border p-4 text-center' },
+    { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
 ];
+
+const actions = [
+    {
+        label: 'View',
+        icon: 'Eye',
+        className: 'cursor-pointer rounded-lg bg-sky-600 p-2 text-white hover:opacity-90',
+    },
+    {
+        label: 'Edit',
+        icon: 'Pencil',
+        className: 'ms-2 cursor-pointer rounded-lg bg-green-600 p-2 text-white hover:opacity-90',
+    },
+    {
+        label: 'Delete',
+        icon: 'Trash',
+        className: 'ms-2 cursor-pointer rounded-lg bg-red-600 p-2 text-white hover:opacity-90',
+    },
+];
+
+export const buildAnimeTableConfig = (studioOptions: AdminFormFieldOption[] = []) => ({
+    columns,
+    actions,
+    formFields: buildFormFields(studioOptions),
+});
 
 export const animeTableConfig = {
     columns: [
@@ -115,5 +168,5 @@ export const animeTableConfig = {
             className: 'ms-2 cursor-pointer rounded-lg bg-red-600 p-2 text-white hover:opacity-90',
         },
     ],
-    formFields,
+    formFields: buildFormFields([]),
 };
