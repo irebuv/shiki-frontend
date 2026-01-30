@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "default" | "outline" | "ghost" | "solid" | "filter";
+    variant?: "default" | "outline" | "ghost" | "solid" | "filter" | "clear" | "toggle";
     size?: "sm" | "md" | "lg";
 }
 
@@ -17,6 +17,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             ghost: "hover:bg-neutral-100 text-neutral-800",
             solid: "bg-violet-600 text-white hover:bg-violet-700",
             filter: "admin-filters-toggle",
+            clear: "rounded-full border border-danger-border bg-danger/80 px-3 py-1 text-xs font-semibold uppercase text-danger-fg hover:bg-danger-hover hover:text-chart-2",
+            toggle: "rounded-full border border-chart-2 bg-chart-3/80 dark:bg-chart-3/50 px-3 py-1 text-xs font-semibold uppercase text-chart-2 hover:bg-chart-2/80 hover:text-chart-3",
         };
 
         const sizes = {
@@ -25,10 +27,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             lg: "h-12 px-6 text-base",
         };
 
+        const sizeClass =
+            variant === "clear" || variant === "toggle" ? "" : sizes[size];
+
         return (
             <button
                 ref={ref}
-                className={cn(baseStyles, variants[variant], sizes[size], className)}
+                className={cn(baseStyles, variants[variant], sizeClass, className)}
                 {...props}
             />
         );

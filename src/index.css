@@ -31,15 +31,25 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
+
+    /*---blue or purples(dark mode) colors---*/
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
+
     --color-chart-5: var(--chart-5);
     --color-chart-6: var(--chart-6);
     --color-chart-7: var(--chart-7);
     --color-chart-8: var(--chart-8);
     --color-chart-9: var(--chart-9);
+    
+    /*------danger colors for button----*/
+    --color-danger: var(--danger);
+    --color-danger-hover: var(--danger-hover);
+    --color-danger-fg: var(--danger-fg);
+    --color-danger-border: var(--danger-border);
+
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -85,7 +95,7 @@
 
     /*---blue or purples(dark mode) colors---*/
     --chart-1: oklch(0.588 0.243 264.376);
-    --chart-2: oklch(90.1% 0.058 230.902);
+    --chart-2: oklch(91.186% 0.04503 231.74);
     --chart-3: oklch(58.8% 0.158 241.966);
     --chart-4: oklch(63.207% 0.20187 254.106);
     /*---grey colors---*/
@@ -96,6 +106,12 @@
     --chart-7: oklch(0.62 0.22 300);
     --chart-8: oklch(0.85 0.12 20);
     --chart-9: oklch(0.71 0.13 228);
+
+   /*------danger colors for button----*/
+--danger: oklch(60% 0.23 12);
+--danger-hover: oklch(56% 0.25 12);
+--danger-fg: oklch(98% 0.01 12);
+--danger-border: oklch(60% 0.23 12 / 0.35);
 
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
@@ -139,12 +155,17 @@
     --chart-3: oklch(55.8% 0.288 302.321);
     --chart-4: oklch(0.627 0.265 303.9);
 
-
     --chart-5: oklch(0.645 0.246 16.439);
     --chart-6: oklch(0.42 0.18 120);
     --chart-7: oklch(0.42 0.22 300);
     --chart-8: oklch(0.65 0.12 20);
     --chart-9: oklch(0.62 0.2 285);
+
+    /*------danger colors for button----*/
+--danger: oklch(68% 0.22 345);
+--danger-hover: oklch(72% 0.20 345);
+--danger-fg: oklch(16% 0.02 345);
+--danger-border: oklch(68% 0.22 345 / 0.30);
 
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
@@ -172,8 +193,6 @@
     }
 }
 
-   
-
 @property --wave-a {
     syntax: '<number>';
     inherits: false;
@@ -198,7 +217,8 @@ html.theme-wave-active::before {
 
 html.theme-wave-in::before {
     opacity: 1;
-    transition: clip-path 700ms cubic-bezier(0.55, 0, 1, 0.45),
+    transition:
+        clip-path 700ms cubic-bezier(0.55, 0, 1, 0.45),
         opacity 700ms cubic-bezier(0.55, 0, 1, 0.45);
     clip-path: circle(120% at var(--switch-x, 50%) var(--switch-y, 50%));
 }
@@ -209,7 +229,9 @@ html.theme-wave-color::before {
 
 html.theme-wave-out::before {
     opacity: 0.1;
-    transition: clip-path 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease;
+    transition:
+        clip-path 500ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 500ms ease;
     clip-path: circle(0% at var(--switch-x, 50%) var(--switch-y, 50%));
 }
 

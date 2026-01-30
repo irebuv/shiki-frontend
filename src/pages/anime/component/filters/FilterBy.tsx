@@ -5,11 +5,19 @@ type FilterItem =
 
 type Props = {
     items: FilterItem[];
-    setFilters: (values: { filters: string[] | undefined }) => void;
+    setFilters: (values: Record<string, string[] | undefined>) => void;
     selected?: string[]; 
+    paramKey?: string;
+    idPrefix?: string;
 };
 
-export default function FilterBy({ items, setFilters, selected = [] }: Props) {
+export default function FilterBy({
+    items,
+    setFilters,
+    selected = [],
+    paramKey = 'filters',
+    idPrefix,
+}: Props) {
     const selectedSet = new Set(selected);
 
     const normalize = (el: FilterItem) => {
@@ -32,7 +40,7 @@ export default function FilterBy({ items, setFilters, selected = [] }: Props) {
             next.delete(value);
         }
         const asArray = Array.from(next);
-        setFilters({ filters: asArray.length ? asArray : undefined });
+        setFilters({ [paramKey]: asArray.length ? asArray : undefined });
         requestAnimationFrame(() => window.scrollTo(0, scrollY));
     }
 
@@ -42,14 +50,15 @@ export default function FilterBy({ items, setFilters, selected = [] }: Props) {
                 const item = normalize(el);
                 const value = item.value;
                 const isChecked = selectedSet.has(value);
+                const inputId = `${idPrefix ?? paramKey}-${item.id}`;
                 return (
                     <label
-                        htmlFor={`${item.id}`}
-                        key={item.id}
+                        htmlFor={inputId}
+                        key={inputId}
                         className="flex w-full cursor-pointer items-center p-2 hover:bg-input"
                     >
                         <input
-                            id={`${item.id}`}
+                            id={inputId}
                             type="checkbox"
                             checked={isChecked}
                             onChange={(e) => toggle(value, e.target.checked)}

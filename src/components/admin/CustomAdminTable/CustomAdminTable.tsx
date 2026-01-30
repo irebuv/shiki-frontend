@@ -88,7 +88,7 @@ export const CustomAdminTable = ({
     isModal,
     deleteUrl,
     modalTitle,
-    modalDescription,
+    modalDescription = " ",
     formFields,
     refetch,
     createUrl,

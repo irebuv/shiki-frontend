@@ -1,3 +1,4 @@
+import AgeRating from './filters/AgeRating';
 import Filter from './filters/Filter';
 import FilterBy from './filters/FilterBy';
 import Kind from './filters/Kind';
@@ -8,12 +9,18 @@ export default function AnimeFilters({
     filters,
     setFilters,
     availableFilters = {},
+    studios = [],
     activeFilters = [],
+    activeStudios = [],
+    activeAgeRating = [],
 }: {
     filters: any;
     setFilters: any;
     availableFilters?: Record<string, any>;
     activeFilters?: string[];
+    studios?: { id: number; name: string }[];
+    activeStudios?: string[];
+    activeAgeRating?: string[];
 }) {
     const visibleFiltersMap = useMemo(() => {
         const entries = Object.entries(availableFilters ?? {}).map(([key, items]) => {
@@ -48,8 +55,11 @@ export default function AnimeFilters({
         return set;
     }, [visibleFiltersMap]);
 
+    const hasFilterData = Object.keys(visibleFiltersMap).length > 0;
+
     useEffect(() => {
         if (!activeFilters.length) return;
+        if (!hasFilterData) return;
         if (validFilterValues.size === 0) {
             setFilters({ filters: undefined });
             return;
@@ -57,7 +67,7 @@ export default function AnimeFilters({
         const sanitized = activeFilters.filter((value) => validFilterValues.has(String(value)));
         if (sanitized.length === activeFilters.length) return;
         setFilters({ filters: sanitized.length ? sanitized : undefined });
-    }, [activeFilters, validFilterValues, setFilters]);
+    }, [activeFilters, validFilterValues, hasFilterData, setFilters]);
 
     return (
         <div>
@@ -68,10 +78,28 @@ export default function AnimeFilters({
                 <Kind value={filters?.type} setFilters={setFilters} />
             </Filter>
             {Object.entries(visibleFiltersMap).map(([key, items]) => (
-                    <Filter key={key} storageKey={key} title={key}>
-                        <FilterBy items={items} setFilters={setFilters} selected={activeFilters} />
-                    </Filter>
-                ))}
+                <Filter key={key} storageKey={key} title={key}>
+                    <FilterBy
+                        items={items}
+                        setFilters={setFilters}
+                        selected={activeFilters}
+                        idPrefix={key}
+                    />
+                </Filter>
+            ))}
+            {studios.length > 0 && (
+                <Filter title={'Studios'} storageKey="studios">
+                    <FilterBy
+                        items={studios}
+                        setFilters={setFilters}
+                        selected={activeStudios}
+                        paramKey="studios"
+                    />
+                </Filter>
+            )}
+            <Filter title={'Rating'} storageKey="age_rating">
+                <AgeRating setFilters={setFilters} selected={activeAgeRating} />
+            </Filter>
         </div>
     );
 }
