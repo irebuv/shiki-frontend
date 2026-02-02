@@ -14,13 +14,13 @@ import {
 } from '@floating-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { imageUrl } from '@/lib/imageUrl';
+import { Link } from 'react-router-dom';
 interface Props {
     anime: Anime;
 }
 
 export function AnimeCard({ anime }: Props) {
     const [open, setOpen] = useState(false);
-
     const ARROW_H = 20;
     const arrowRef = useRef<SVGSVGElement | null>(null);
 
@@ -58,14 +58,14 @@ export function AnimeCard({ anime }: Props) {
     return (
         <>
             {/* CARD */}
-            <div ref={refs.setReference} {...getReferenceProps()} className="cursor-pointer">
+            <Link to={`/anime/${anime.slug}`} ref={refs.setReference} {...getReferenceProps()} className="cursor-pointer">
                 <img
                     className="aspect-2/3 w-full rounded-lg object-cover"
                     src={imageUrl(anime.featured_image)}
                     alt={anime.name}
                 />
                 <p className="mt-2 text-sm line-clamp-2">{anime.name}</p>
-            </div>
+            </Link>
 
             {/* POPOVER */}
             <FloatingPortal>

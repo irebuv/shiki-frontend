@@ -16,6 +16,7 @@ export type StudioOption = {
 export interface Anime {
     id: number;
     name: string;
+    slug: string;
     description: string | null;
     featured_image: string;
     featured_image_url?: string | null;

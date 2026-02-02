@@ -3,7 +3,6 @@ import type { AdminFormField, AdminFormFieldOption } from '@/types/admin/adminTa
 import { imageUrl } from '@/lib/imageUrl';
 import { AGE_RATING_OPTIONS } from '@/lib/ageRating';
 
-
 const AGE_RATING_VALUES = AGE_RATING_OPTIONS.map((option) => String(option.value));
 
 const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[] => {
@@ -70,6 +69,26 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
                 (value) => (value === '' || value === null ? undefined : value),
                 hasStudios ? z.number().int().positive() : z.number().int().positive().optional(),
             ),
+        },
+        {
+            id: 'status',
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            defaultValue: '',
+            options: [
+                { value: 'airing', label: 'airing' },
+                { value: 'planned', label: 'planned' },
+                { value: 'released', label: 'released' },
+            ],
+            validation: z
+                .string()
+                .refine(
+                    (value) =>
+                        value === '' ||
+                        ['airing', 'planned', 'released',].includes(value),
+                    'Select a valid type',
+                ),
         },
         {
             id: 'age_rating',
