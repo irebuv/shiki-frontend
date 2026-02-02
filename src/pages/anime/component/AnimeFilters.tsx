@@ -1,9 +1,13 @@
 import AgeRating from './filters/AgeRating';
 import Filter from './filters/Filter';
 import FilterBy from './filters/FilterBy';
+import FilterPresets from './filters/FilterPresets';
 import Kind from './filters/Kind';
 import Sorts from './filters/Sorts';
 import { useEffect, useMemo } from 'react';
+import type { AnimeFilterPreset } from '@/types/anime';
+
+export { ChosenFilters } from './filters/ChosenFilters';
 
 export default function AnimeFilters({
     filters,
@@ -13,6 +17,13 @@ export default function AnimeFilters({
     activeFilters = [],
     activeStudios = [],
     activeAgeRating = [],
+    presets = [],
+    presetsLoading = false,
+    canSavePreset = false,
+    isAuthenticated = false,
+    onApplyPreset,
+    onCreatePreset,
+    onDeletePreset,
 }: {
     filters: any;
     setFilters: any;
@@ -21,6 +32,13 @@ export default function AnimeFilters({
     studios?: { id: number; name: string }[];
     activeStudios?: string[];
     activeAgeRating?: string[];
+    presets?: AnimeFilterPreset[];
+    presetsLoading?: boolean;
+    canSavePreset?: boolean;
+    isAuthenticated?: boolean;
+    onApplyPreset?: (preset: AnimeFilterPreset) => void;
+    onCreatePreset?: (name: string) => void;
+    onDeletePreset?: (preset: AnimeFilterPreset) => void;
 }) {
     const visibleFiltersMap = useMemo(() => {
         const entries = Object.entries(availableFilters ?? {}).map(([key, items]) => {
@@ -71,6 +89,19 @@ export default function AnimeFilters({
 
     return (
         <div>
+            {(onApplyPreset || onCreatePreset || onDeletePreset) && (
+                <Filter title={'Presets'} storageKey="presets">
+                    <FilterPresets
+                        presets={presets}
+                        loading={presetsLoading}
+                        canSave={canSavePreset}
+                        isAuthenticated={isAuthenticated}
+                        onApply={(preset) => onApplyPreset?.(preset)}
+                        onCreate={(name) => onCreatePreset?.(name)}
+                        onDelete={(preset) => onDeletePreset?.(preset)}
+                    />
+                </Filter>
+            )}
             <Filter title={'Sort BY'} storageKey="sort">
                 <Sorts sort={filters?.sort ?? 'updated_at:desc'} setFilters={setFilters} />
             </Filter>

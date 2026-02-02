@@ -45,3 +45,17 @@ export interface AnimeResponse {
     filtersList?: FiltersMap | null;
     studios?: StudioOption[];
 }
+
+export type AnimeFilterPreset = {
+    id: number;
+    name: string;
+    filters: {
+        sort?: string;
+        type?: string[];
+        filters?: string[];
+        studios?: string[];
+        age_rating?: string[];
+    };
+    created_at?: string | null;
+    updated_at?: string | null;
+};

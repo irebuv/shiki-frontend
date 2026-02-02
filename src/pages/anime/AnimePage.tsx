@@ -1,24 +1,18 @@
-﻿import MainLayout from '@/components/layout/MainLayout';
-import { useQueryData } from '@/hooks/useQueryData';
-import { AnimeResponse } from '@/types/anime';
+﻿import { useQueryData } from '@/hooks/useQueryData';
+import { AnimeResponse, type AnimeFilterPreset } from '@/types/anime';
+import api from '@/api/axios';
+import { toast } from '@/components/custom/Sonner';
+import { useAuth } from '@/context/AuthContext';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AnimeList from './component/AnimeList';
 import { Pagination } from '@/components/custom/Pagination';
-import AnimeFilters from './component/AnimeFilters';
-import { ChosenFilters } from './component/filters/ChosenFilters';
-import { AGE_RATING_OPTIONS } from '@/lib/ageRating';
+import AnimeFilters, { ChosenFilters } from './component/AnimeFilters';
+import { normalizeList } from '@/lib/filterUtils';
+import { AnimeFiltersState } from './types';
 
 export default function AnimePage() {
-    const { data, filters, setFilters } = useQueryData<
-        AnimeResponse,
-        {
-            page: number;
-            sort: string;
-            type?: string[];
-            filters: string[] | string;
-            studios?: string[] | string;
-            age_rating?: string[] | string;
-        }
-    >({
+    const { user } = useAuth();
+    const { data, filters, setFilters } = useQueryData<AnimeResponse, AnimeFiltersState>({
         url: '/anime',
         initial: {
             page: 1,
@@ -31,89 +25,95 @@ export default function AnimePage() {
     });
 
     const availableFilters = data?.filtersList ?? data?.filters ?? data?.availableFilters;
-    const activeFilters: string[] = Array.isArray(filters?.filters)
-        ? filters.filters
-        : filters?.filters
-          ? String(filters.filters).split(',').filter(Boolean)
-          : [];
-    const activeStudios: string[] = Array.isArray(filters?.studios)
-        ? filters.studios
-        : filters?.studios
-          ? String(filters.studios).split(',').filter(Boolean)
-          : [];
-    const activeTypes: string[] = Array.isArray(filters?.type)
-        ? filters.type
-        : filters?.type
-          ? String(filters.type).split(',').filter(Boolean)
-          : [];
-    const activeAgeRate: string[] = Array.isArray(filters?.age_rating)
-        ? filters.age_rating
-        : filters?.age_rating
-          ? String(filters.age_rating).split(',').filter(Boolean)
-          : [];
+    const activeFilters = normalizeList(filters?.filters);
+    const activeStudios = normalizeList(filters?.studios);
+    const activeTypes = normalizeList(filters?.type);
+    const activeAgeRate = normalizeList(filters?.age_rating);
 
     console.log('data-home', data, activeFilters);
-    const filterTitleMap = new Map<string, string>();
-    const filterGroupMap = new Map<string, string>();
-    Object.entries(availableFilters ?? {}).forEach(([groupTitle, items]) => {
-        (Array.isArray(items) ? items : []).forEach((item) => {
-            if (typeof item === 'string' || typeof item === 'number') {
-                filterTitleMap.set(String(item), String(item));
-                filterGroupMap.set(String(item), groupTitle);
-                return;
-            }
-            const id = item?.id ?? item?.value ?? item?.title ?? item?.name;
-            const title = item?.title ?? item?.name ?? String(id ?? '');
-            if (id !== undefined && id !== null) {
-                filterTitleMap.set(String(id), String(title));
-                filterGroupMap.set(String(id), groupTitle);
-            }
-        });
-    });
 
-    const studioTitleMap = new Map<string, string>();
-    (data?.studios ?? []).forEach((studio) => {
-        studioTitleMap.set(String(studio.id), studio.name);
-    });
+    const [presets, setPresets] = useState<AnimeFilterPreset[]>([]);
+    const [presetsLoading, setPresetsLoading] = useState(false);
 
-    const typeLabelMap: Record<string, string> = {
-        tv: 'TV Series',
-        tv_short: 'TV Short',
-        tv_medium: 'TV Medium',
-        tv_long: 'TV Long',
-        movie: 'Movie',
-        ova: 'OVA',
-        ona: 'ONA',
-    };
+    const canSavePreset = presets.length < 3;
 
-    const ageRatingMap = new Map<string, string>(
-        AGE_RATING_OPTIONS.map((option) => [String(option.value), option.label]),
+    const fetchPresets = useCallback(async () => {
+        if (!user) {
+            setPresets([]);
+            return;
+        }
+        setPresetsLoading(true);
+        try {
+            const res = await api.get<{ presets: AnimeFilterPreset[] }>('/anime-filter-presets');
+            setPresets(res.data.presets ?? []);
+        } catch (err) {
+            setPresets([]);
+        } finally {
+            setPresetsLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchPresets();
+    }, [fetchPresets]);
+
+    const presetPayload = useMemo(
+        () => ({
+            sort: typeof filters?.sort === 'string' ? filters.sort : 'updated_at:desc',
+            type: activeTypes,
+            filters: activeFilters,
+            studios: activeStudios,
+            age_rating: activeAgeRate,
+        }),
+        [filters?.sort, activeTypes, activeFilters, activeStudios, activeAgeRate],
     );
 
-    const removeFilter = (value: string) => {
-        const next = activeFilters.filter((id) => id !== value);
-        setFilters({ filters: next.length ? next : undefined });
+    const applyPreset = (preset: AnimeFilterPreset) => {
+        const p = preset.filters ?? {};
+        setFilters({
+            sort: p.sort ?? presetPayload.sort,
+            type: p.type ?? [],
+            filters: p.filters ?? [],
+            studios: p.studios ?? [],
+            age_rating: p.age_rating ?? [],
+        });
     };
 
-    const removeStudio = (value: string) => {
-        const next = activeStudios.filter((id) => id !== value);
-        setFilters({ studios: next.length ? next : undefined });
+    const savePreset = async (name: string) => {
+        if (!user) {
+            toast.error('Please sign in to save presets.');
+            return;
+        }
+        const trimmed = name.trim();
+        if (!trimmed) return;
+
+        try {
+            const res = await api.post<{ preset: AnimeFilterPreset }>('/anime-filter-presets', {
+                name: trimmed,
+                filters: presetPayload,
+            });
+            setPresets((prev) => [res.data.preset, ...prev].slice(0, 3));
+            toast.success('Preset saved.');
+        } catch (err) {
+            // handled by interceptor
+        }
     };
 
-    const removeType = (value: string) => {
-        const next = activeTypes.filter((id) => id !== value);
-        setFilters({ type: next.length ? next : undefined });
+    const deletePreset = async (preset: AnimeFilterPreset) => {
+        if (!user) return;
+        try {
+            await api.delete(`/anime-filter-presets/${preset.id}`);
+            setPresets((prev) => prev.filter((p) => p.id !== preset.id));
+            toast.success('Preset deleted.');
+        } catch (err) {
+            // handled by interceptor
+        }
     };
-
-    const removeAgeRate = (value: string) => {
-        const next = activeAgeRate.filter((id) => id !== value);
-        setFilters({age_rating: next.length ? next : undefined});
-    };
-
 
     return (
         <div className="w-full mx-auto flex flex-col gap-5 px-7 mt-2">
             <div className={'grid grid-cols-5 gap-3'}>
+
                 <AnimeFilters
                     filters={filters}
                     activeFilters={activeFilters}
@@ -122,6 +122,13 @@ export default function AnimePage() {
                     activeStudios={activeStudios}
                     activeAgeRating={activeAgeRate}
                     setFilters={setFilters}
+                    presets={presets}
+                    presetsLoading={presetsLoading}
+                    canSavePreset={canSavePreset}
+                    isAuthenticated={!!user}
+                    onApplyPreset={applyPreset}
+                    onCreatePreset={savePreset}
+                    onDeletePreset={deletePreset}
                 />
                 <div className={'col-span-4 mt-3 justify-items-start"'}>
                     <div className={'mb-5 grid grid-cols-3 items-center justify-between'}>
@@ -135,27 +142,13 @@ export default function AnimePage() {
                         </div>
                     </div>
                     <ChosenFilters
+                        availableFilters={availableFilters}
+                        studios={data?.studios ?? []}
                         activeTypes={activeTypes}
                         activeStudios={activeStudios}
                         activeFilters={activeFilters}
                         activeAgeRating={activeAgeRate}
-                        typeLabelMap={typeLabelMap}
-                        studioTitleMap={studioTitleMap}
-                        filterTitleMap={filterTitleMap}
-                        filterGroupMap={filterGroupMap}
-                        ageRatingMap={ageRatingMap}
-                        onRemoveAgeRate={removeAgeRate}
-                        onRemoveType={removeType}
-                        onRemoveStudio={removeStudio}
-                        onRemoveFilter={removeFilter}
-                        onClearAll={() =>
-                            setFilters({
-                                type: undefined,
-                                studios: undefined,
-                                filters: undefined,
-                                age_rating: undefined,
-                            })
-                        }
+                        setFilters={setFilters}
                     />
                     <AnimeList data={data?.anime} />
                 </div>

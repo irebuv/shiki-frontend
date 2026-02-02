@@ -1,14 +1,3 @@
-:root {
-    --admin-filter-header-bg: #f7f9ff;
-    --admin-filter-border: #e3e7f1;
-    --admin-filter-divider: #e6e6e6;
-    --admin-filter-text-muted: #7a8195;
-    --admin-filter-toggle-off: #ccc;
-    --admin-filter-toggle-on: #3498db;
-    --admin-filter-toggle-thumb-on: #f7f7f7;
-    --admin-filter-toggle-text-off: #999;
-}
-
 .current-filter {
     label {
         input {
@@ -48,9 +37,9 @@
 
 .admin-filters-toggle {
     justify-self: start;
-    border: 1px solid var(--admin-filter-border);
-    background: var(--color-background);
-    color: var(--admin-filter-text-muted);
+    border: 1px solid var(--chart-2);
+    background: var(--background);
+    color: var(--muted-foreground);
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 12px;
@@ -98,7 +87,7 @@
 
 .admin-filter-group {
     background: var(--admin-filter-card-bg);
-    border: 1px solid var(--admin-filter-border);
+    border: 1px solid var(--chart-2);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
@@ -106,8 +95,8 @@
 
 .admin-filter-header {
     padding: 10px 16px;
-    background: var(--admin-filter-header-bg);
-    border-bottom: 1px solid var(--admin-filter-border);
+    background: var(--chart-2);
+    border-bottom: 1px solid var(--chart-2);
 
     h6 {
         margin: 0;
@@ -128,7 +117,7 @@
     justify-items: center;
     gap: 6px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--admin-filter-divider);
+    border-bottom: 1px solid var(--accent);
 
     &:last-child {
         border-bottom: none;
@@ -138,13 +127,13 @@
 
 .admin-filter-label {
     font-size: 14px;
-    color: var(--admin-filter-text-muted);
+    color: var(--muted-foreground);
     text-align: center;
 }
 
 .admin-filter-note {
     font-size: 12px;
-    color: var(--color-destructive);
+    color: var(--destructive);
     text-align: center;
 }
 
@@ -179,7 +168,7 @@
     position: absolute;
     top: 9px;
     right: 14px;
-    color: var(--admin-filter-toggle-text-off);
+    color: var(--ring);
     font-family: Arial, sans-serif;
     font-size: 11px;
     line-height: 1;
@@ -192,7 +181,7 @@
     left: 3px;
     width: 24px;
     height: 24px;
-    background-color: var(--color-background);
+    background-color: var(--background);
     border-radius: 50%;
 }
 
@@ -200,20 +189,20 @@
     content: attr(data-on-label);
     left: 14px;
     right: auto;
-    color: var(--color-background);
+    color: var(--background);
 }
 
 .filter-checks input:checked + label::after {
     left: 59px;
-    background-color: var(--admin-filter-toggle-thumb-on);
+    background-color: var(--secondary);
 }
 
 .filter-checks .demo1 + label {
-    background-color: var(--admin-filter-toggle-off);
+    background-color: var(--accent);
 }
 
 .filter-checks .demo1 + label::before {
-    color: var(--admin-filter-toggle-text-off);
+    color: var(--ring);
 }
 
 .filter-checks .demo1:checked + label {
@@ -221,5 +210,5 @@
 }
 
 .filter-checks .demo1:checked + label::before {
-    color: var(--color-background);
+    color: var(--background);
 }

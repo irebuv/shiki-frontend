@@ -1,40 +1,43 @@
-﻿import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useEffect, useState } from 'react';
+import { updateListFilter } from '@/lib/filterUtils';
+import { AGE_RATING_OPTIONS } from '@/lib/ageRating';
+import { useEffect, useMemo, useState } from 'react';
+import type { AnimeSetFilters } from '../../types';
 
-type Props = {
+type ChosenFiltersProps = {
+    availableFilters?: Record<string, any>;
+    studios?: { id: number; name: string }[];
     activeTypes: string[];
     activeStudios: string[];
     activeAgeRating: string[];
     activeFilters: string[];
-    typeLabelMap: Record<string, string>;
-    studioTitleMap: Map<string, string>;
-    filterTitleMap: Map<string, string>;
-    filterGroupMap: Map<string, string>;
-    ageRatingMap: Map<string, string>;
-    onRemoveType: (value: string) => void;
-    onRemoveStudio: (value: string) => void;
-    onRemoveFilter: (value: string) => void;
-    onRemoveAgeRate: (value: string) => void;
-    onClearAll: () => void;
+    setFilters: AnimeSetFilters;
 };
 
+const TYPE_LABEL_MAP: Record<string, string> = {
+    tv: 'TV Series',
+    tv_short: 'TV Short',
+    tv_medium: 'TV Medium',
+    tv_long: 'TV Long',
+    movie: 'Movie',
+    ova: 'OVA',
+    ona: 'ONA',
+};
+
+const AGE_RATING_MAP = new Map<string, string>(
+    AGE_RATING_OPTIONS.map((option) => [String(option.value), option.label]),
+);
+
 export function ChosenFilters({
+    availableFilters,
+    studios,
     activeTypes,
     activeStudios,
     activeFilters,
     activeAgeRating,
-    typeLabelMap,
-    studioTitleMap,
-    filterTitleMap,
-    filterGroupMap,
-    ageRatingMap,
-    onRemoveType,
-    onRemoveStudio,
-    onRemoveFilter,
-    onRemoveAgeRate,
-    onClearAll,
-}: Props) {
+    setFilters,
+}: ChosenFiltersProps) {
     const hasAny =
         activeTypes.length > 0 ||
         activeStudios.length > 0 ||
@@ -51,13 +54,60 @@ export function ChosenFilters({
         setGone(false);
         requestAnimationFrame(() => setHidden(false));
     };
+
     useEffect(() => {
         if (!hidden) {
             setGone(false);
         }
     }, [hidden]);
 
+    const { filterTitleMap, filterGroupMap } = useMemo(() => {
+        const titleMap = new Map<string, string>();
+        const groupMap = new Map<string, string>();
+        Object.entries(availableFilters ?? {}).forEach(([groupTitle, items]) => {
+            (Array.isArray(items) ? items : []).forEach((item) => {
+                if (typeof item === 'string' || typeof item === 'number') {
+                    titleMap.set(String(item), String(item));
+                    groupMap.set(String(item), groupTitle);
+                    return;
+                }
+                const id = item?.id ?? item?.value ?? item?.title ?? item?.name;
+                const title = item?.title ?? item?.name ?? String(id ?? '');
+                if (id !== undefined && id !== null) {
+                    titleMap.set(String(id), String(title));
+                    groupMap.set(String(id), groupTitle);
+                }
+            });
+        });
+        return { filterTitleMap: titleMap, filterGroupMap: groupMap };
+    }, [availableFilters]);
+
+    const studioTitleMap = useMemo(() => {
+        const map = new Map<string, string>();
+        (studios ?? []).forEach((studio) => {
+            map.set(String(studio.id), studio.name);
+        });
+        return map;
+    }, [studios]);
+
     if (!hasAny) return null;
+
+    const removeFilter = (value: string) =>
+        setFilters(updateListFilter('filters', activeFilters, value));
+    const removeStudio = (value: string) =>
+        setFilters(updateListFilter('studios', activeStudios, value));
+    const removeType = (value: string) => setFilters(updateListFilter('type', activeTypes, value));
+    const removeAgeRate = (value: string) =>
+        setFilters(updateListFilter('age_rating', activeAgeRating, value));
+
+    const clearAll = () => {
+        setFilters({
+            type: undefined,
+            studios: undefined,
+            filters: undefined,
+            age_rating: undefined,
+        });
+    };
 
     const renderChip = (id: string, label: string, onRemove: (value: string) => void) => (
         <button
@@ -109,7 +159,7 @@ export function ChosenFilters({
     return (
         <div className="mb-4 inline-flex max-w-full flex-col items-start rounded-lg border bg-background p-2 text-sm">
             <div className="inline-flex w-fit max-w-full flex-wrap items-center gap-3">
-                <Button variant="clear" onClick={onClearAll}>
+                <Button variant="clear" onClick={clearAll}>
                     Clear all
                 </Button>
                 <Button variant="toggle" className="mr-1" onClick={() => (hidden ? show() : hide())}>
@@ -118,22 +168,22 @@ export function ChosenFilters({
                 {renderGroup(
                     'Type',
                     activeTypes,
-                    (value) => typeLabelMap[value] ?? value,
-                    onRemoveType,
+                    (value) => TYPE_LABEL_MAP[value] ?? value,
+                    removeType,
                     hidden,
                 )}
                 {renderGroup(
                     'Rating',
                     activeAgeRating,
-                    (value) => ageRatingMap.get(value) ?? value,
-                    onRemoveAgeRate,
+                    (value) => AGE_RATING_MAP.get(value) ?? value,
+                    removeAgeRate,
                     hidden,
                 )}
                 {renderGroup(
                     'Studio',
                     activeStudios,
                     (value) => studioTitleMap.get(value) ?? value,
-                    onRemoveStudio,
+                    removeStudio,
                     hidden,
                 )}
                 {Array.from(grouped.entries()).map(([groupLabel, values]) =>
@@ -141,7 +191,7 @@ export function ChosenFilters({
                         groupLabel,
                         values,
                         (value) => filterTitleMap.get(value) ?? value,
-                        onRemoveFilter,
+                        removeFilter,
                         hidden,
                         `group-${groupLabel}`,
                     ),
