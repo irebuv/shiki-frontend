@@ -21,6 +21,8 @@ export interface Anime {
     featured_image: string;
     featured_image_url?: string | null;
     rating?: string | number | null;
+    season_year?: number | null;
+    season?: string | null;
     created_at?: string | null;
     updated_at?: string | null;
     filters?: { id: number; pivot?: { anime_id: number; filter_id: number } }[];

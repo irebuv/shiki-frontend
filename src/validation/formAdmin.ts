@@ -24,6 +24,22 @@ const defaultSchemaByType = (field: AdminFormField): ZodTypeAny => {
 export const buildAdminSchema = (fields: AdminFormField[]) => {
     const shape: Record<string, ZodTypeAny> = {};
     fields.forEach((field) => {
+        if (field.type === 'season' && field.secondaryName) {
+            if (field.validation === false) {
+                shape[field.name] = z.any();
+            } else {
+                shape[field.name] = field.validation ?? defaultSchemaByType(field);
+            }
+
+            if (field.secondaryValidation === false) {
+                shape[field.secondaryName] = z.any();
+            } else {
+                shape[field.secondaryName] =
+                    field.secondaryValidation ?? defaultSchemaByType(field);
+            }
+            return;
+        }
+
         if (field.validation === false) {
             shape[field.name] = z.any();
             return;

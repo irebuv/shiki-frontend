@@ -35,7 +35,10 @@ export default function AnimeDetailPage() {
             overlay={<LoadingOverlay />}
             className="container mx-auto p-4"
         >
-            <div>{anime?.name}</div>
+            <div className="grid grid-cols-7 gap-10 text-black">
+                <div className="col-span-5 bg-background-light/50 rounded p-4">{anime?.name}</div>
+                <div className="col-span-2 bg-background-light/50 rounded p-4">fff</div>
+            </div>
         </QueryState>
     )
 }

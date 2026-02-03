@@ -35,6 +35,7 @@ export type AdminFormFieldType =
     | 'file'
     | 'filters'
     | 'filter-list'
+    | 'season'
     | (string & {});
 
 export interface AdminFormFieldOption {
@@ -55,6 +56,13 @@ export interface AdminFormField {
     parseAsNumber?: boolean;
     emptyValue?: string;
     sanitize?: (value: unknown) => unknown;
+    secondaryName?: string;
+    secondaryLabel?: string;
+    secondaryOptions?: AdminFormFieldOption[];
+    secondaryParseAsNumber?: boolean;
+    secondaryEmptyValue?: string;
+    secondarySanitize?: (value: unknown) => unknown;
+    secondaryValidation?: ZodTypeAny | false;
 }
 
 export interface AdminTableProps {

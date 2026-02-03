@@ -4,6 +4,34 @@ import { imageUrl } from '@/lib/imageUrl';
 import { AGE_RATING_OPTIONS } from '@/lib/ageRating';
 
 const AGE_RATING_VALUES = AGE_RATING_OPTIONS.map((option) => String(option.value));
+const SEASON_OPTIONS: AdminFormFieldOption[] = [
+    { value: 'winter', label: 'Winter' },
+    { value: 'spring', label: 'Spring' },
+    { value: 'summer', label: 'Summer' },
+    { value: 'fall', label: 'Fall' },
+];
+
+const buildSeasonYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const options: AdminFormFieldOption[] = [];
+    for (let year = currentYear + 5; year >= currentYear - 10; year -= 1) {
+        options.push({ value: year, label: String(year) });
+    }
+    const bucketStart = Math.floor((currentYear - 11) / 5) * 5;
+    for (let year = bucketStart; year >= 2005; year -= 5) {
+        if (year === 2010) {
+            options.push({ value: 2009, label: '2009-2005' });
+            continue;
+        }
+        if (year === 2005) {
+            options.push({ value: 2004, label: '2004-2000' });
+            continue;
+        }
+        options.push({ value: year, label: `${year}-${year - 5}` });
+    }
+    options.push({ value: 1999, label: 'Before 2000' });
+    return options;
+};
 
 const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[] => {
     const hasStudios = studioOptions.length > 0;
@@ -48,10 +76,8 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
             ],
             validation: z
                 .string()
-                .optional()
                 .refine(
                     (value) =>
-                        value === '' ||
                         ['tv_short', 'tv_medium', 'tv_long', 'movie', 'ova', 'ona'].includes(value),
                     'Select a valid type',
                 ),
@@ -67,7 +93,7 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
             sanitize: (value) => (value ? value : undefined),
             validation: z.preprocess(
                 (value) => (value === '' || value === null ? undefined : value),
-                hasStudios ? z.number().int().positive() : z.number().int().positive().optional(),
+                z.number().int().positive(),
             ),
         },
         {
@@ -85,10 +111,9 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
                 .string()
                 .refine(
                     (value) =>
-                        value === '' ||
-                        ['airing', 'planned', 'released',].includes(value),
-                    'Select a valid type',
-                ),
+                        ['airing', 'planned', 'released'].includes(value),
+                    'Select a valid status',
+            ),
         },
         {
             id: 'age_rating',
@@ -107,6 +132,30 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
                         'Select a valid age rating',
                     ),
             ),
+        },
+        {
+            id: 'season',
+            name: 'season_year',
+            label: 'Season year',
+            type: 'season',
+            defaultValue: undefined,
+            options: buildSeasonYearOptions(),
+            parseAsNumber: true,
+            emptyValue: '',
+            validation: z.preprocess(
+                (value) => (value === '' || value === null ? undefined : value),
+                z.number().int().positive(),
+            ),
+            secondaryName: 'season',
+            secondaryLabel: 'Season',
+            secondaryOptions: SEASON_OPTIONS,
+            secondaryEmptyValue: '',
+            secondaryValidation: z
+                .string()
+                .refine(
+                    (value) => ['winter', 'spring', 'summer', 'fall'].includes(value),
+                    'Select a valid season',
+                ),
         },
         {
             id: 'filter_ids',

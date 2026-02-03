@@ -19,19 +19,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { DESCRIPTION_LINE_OPTIONS } from '@/lib/descriptionLines';
 import { AnimeAdminFilters } from '../../AdminFilters/AnimeAdminFilters';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
-
-type FilterListItem = {
-    id?: number;
-    title?: string;
-    visible?: boolean;
-    clientId?: string;
-};
+import FilterListField from './fields/FilterListField';
+import SeasonField from './fields/SeasonField';
+import { cn } from '@/lib/utils';
 
 export default function CustomModalForm({
     open,
@@ -54,14 +48,11 @@ export default function CustomModalForm({
 }) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showPreview, setShowPreview] = useState(false);
-    const [selectedDate, setSelectedDate] = useState<Date>();
     const [dragActive, setDragActive] = useState(false);
     const [descriptionRows, setDescriptionRows] = useLocalStorage<number>(
         'modal.description.rows',
         6,
     );
-    const filterClientIdCounterRef = useRef(0);
-    const placeholderClientIdsRef = useRef<Record<string, string>>({});
     const fileFieldName = useMemo(() => {
         const fileField = fields?.find((field) => field.type === 'file');
         return fileField?.name ?? null;
@@ -122,9 +113,7 @@ export default function CustomModalForm({
         const onPaste = (e: ClipboardEvent) => {
             const items = e.clipboardData?.items;
             if (!items) return;
-            const imageItem = Array.from(items).find((item) =>
-                item.type.startsWith('image/'),
-            );
+            const imageItem = Array.from(items).find((item) => item.type.startsWith('image/'));
             if (!imageItem) return;
             const file = imageItem.getAsFile();
             if (!file) return;
@@ -134,62 +123,6 @@ export default function CustomModalForm({
         window.addEventListener('paste', onPaste);
         return () => window.removeEventListener('paste', onPaste);
     }, [open, readOnly, fileFieldName, setData]);
-
-    const nextFilterClientId = () => {
-        filterClientIdCounterRef.current += 1;
-        return `tmp-filter-${filterClientIdCounterRef.current}`;
-    };
-
-    const ensurePlaceholderClientId = (fieldName: string, nonBlank: FilterListItem[]) => {
-        const current = placeholderClientIdsRef.current[fieldName];
-        if (!current || nonBlank.some((item) => item.clientId === current)) {
-            placeholderClientIdsRef.current[fieldName] = nextFilterClientId();
-        }
-        return placeholderClientIdsRef.current[fieldName];
-    };
-
-    const normalizeFilterList = (value: unknown, fieldName: string): FilterListItem[] => {
-        const list = Array.isArray(value) ? (value as FilterListItem[]) : [];
-
-        const withStableIds = list.map((item) => ({
-            id: item.id,
-            title: item.title ?? '',
-            visible: item.visible ?? true,
-            clientId: item.clientId ?? (!item.id ? nextFilterClientId() : undefined),
-        }));
-
-        const isBlank = (item: FilterListItem) => (item.title ?? '').trim() === '';
-        const nonBlank = withStableIds.filter((item) => !isBlank(item));
-        const blankItem = withStableIds.find(isBlank);
-
-        if (blankItem?.clientId) {
-            placeholderClientIdsRef.current[fieldName] = blankItem.clientId;
-        }
-
-        const placeholderId = ensurePlaceholderClientId(fieldName, nonBlank);
-        const placeholder: FilterListItem = blankItem ?? {
-            title: '',
-            visible: true,
-            clientId: placeholderId,
-        };
-
-        if (nonBlank.length === 0) {
-            return [placeholder];
-        }
-
-        return [...nonBlank, placeholder];
-    };
-
-    const gentleSpring = {
-        type: 'spring',
-        stiffness: 260,
-        damping: 26,
-        mass: 0.85,
-    } as const;
-    const listLayoutTransition = {
-        duration: 0.6,
-        ease: [0.22, 1, 0.36, 1],
-    } as const;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange} modal>
@@ -245,7 +178,7 @@ export default function CustomModalForm({
                                     <Select
                                         value={
                                             data[f.name] === undefined || data[f.name] === null
-                                                ? f.emptyValue ?? undefined
+                                                ? (f.emptyValue ?? undefined)
                                                 : String(data[f.name])
                                         }
                                         onValueChange={(value) => {
@@ -254,7 +187,9 @@ export default function CustomModalForm({
                                                 setData(f.name, undefined);
                                                 return;
                                             }
-                                            const nextValue = f.parseAsNumber ? Number(value) : value;
+                                            const nextValue = f.parseAsNumber
+                                                ? Number(value)
+                                                : value;
                                             setData(f.name, nextValue);
                                         }}
                                         disabled={readOnly}
@@ -273,212 +208,27 @@ export default function CustomModalForm({
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                ) : f.type === 'season' && f.secondaryName ? (
+                                    <SeasonField
+                                        field={f}
+                                        data={data}
+                                        setData={setData}
+                                        readOnly={readOnly}
+                                    />
                                 ) : f.type === 'filter-list' ? (
-                                    <motion.div
-                                        layout
-                                        transition={{ layout: listLayoutTransition }}
-                                        className="space-y-3 rounded-lg border p-3"
-                                    >
-                                        {(() => {
-                                            const items = normalizeFilterList(data[f.name], f.name);
-                                            const updateItems = (nextItems: FilterListItem[]) => {
-                                                if (readOnly) return;
-                                                setData(
-                                                    f.name,
-                                                    normalizeFilterList(nextItems, f.name),
-                                                );
-                                            };
-
-                                            return (
-                                                <LayoutGroup>
-                                                    <motion.div
-                                                        layout
-                                                        transition={gentleSpring}
-                                                        className="space-y-3"
-                                                    >
-                                                        <AnimatePresence initial={false}>
-                                                            {items.map((item, index) => {
-                                                                const isLast =
-                                                                    index === items.length - 1;
-                                                                const isBlank =
-                                                                    (item.title ?? '').trim() ===
-                                                                    '';
-                                                                const isPlaceholder =
-                                                                    isLast && isBlank && !item.id;
-                                                                const inputId = `${f.id}-visible-${index}`;
-                                                                const rowKey =
-                                                                    item.id !== undefined
-                                                                        ? `filter-${item.id}`
-                                                                        : (item.clientId ??
-                                                                          `filter-new-${index}`);
-
-                                                                const handleTitleChange = (
-                                                                    value: string,
-                                                                ) => {
-                                                                    const next = [...items];
-                                                                    next[index] = {
-                                                                        ...next[index],
-                                                                        title: value,
-                                                                    };
-                                                                    updateItems(next);
-                                                                };
-
-                                                                const handleToggleVisible = () => {
-                                                                    const next = [...items];
-                                                                    const currentVisible =
-                                                                        next[index]?.visible ??
-                                                                        true;
-                                                                    next[index] = {
-                                                                        ...next[index],
-                                                                        visible: !currentVisible,
-                                                                    };
-                                                                    updateItems(next);
-                                                                };
-
-                                                                const handleRemove = () => {
-                                                                    const next = items.filter(
-                                                                        (_, i) => i !== index,
-                                                                    );
-                                                                    updateItems(next);
-                                                                };
-
-                                                                const layoutTransition =
-                                                                    isPlaceholder
-                                                                        ? {
-                                                                              ...gentleSpring,
-                                                                              stiffness: 120,
-                                                                              damping: 32,
-                                                                              mass: 1.25,
-                                                                          }
-                                                                        : gentleSpring;
-
-                                                                const fadeDuration = isPlaceholder
-                                                                    ? 0.9
-                                                                    : 0.22;
-                                                                const fadeDelay = isPlaceholder
-                                                                    ? 0.08
-                                                                    : 0;
-
-                                                                return (
-                                                                    <motion.div
-                                                                        key={rowKey}
-                                                                        layout="position"
-                                                                        layoutId={`filter-row-${rowKey}`}
-                                                                        initial={{
-                                                                            opacity: 0,
-                                                                            height: 0,
-                                                                        }}
-                                                                        animate={{
-                                                                            opacity: 1,
-                                                                            height: 'auto',
-                                                                        }}
-                                                                        exit={{
-                                                                            opacity: 0,
-                                                                            height: 0,
-                                                                        }}
-                                                                        transition={{
-                                                                            layout: layoutTransition,
-                                                                            height: {
-                                                                                duration:
-                                                                                    isPlaceholder
-                                                                                        ? 0.9
-                                                                                        : 0.45,
-                                                                                ease: [
-                                                                                    0.22, 1, 0.36,
-                                                                                    1,
-                                                                                ],
-                                                                                delay: fadeDelay,
-                                                                            },
-                                                                            opacity: {
-                                                                                duration:
-                                                                                    fadeDuration,
-                                                                                ease: 'easeOut',
-                                                                                delay: fadeDelay,
-                                                                            },
-                                                                        }}
-                                                                        className="overflow-hidden"
-                                                                    >
-                                                                        <div className="rounded-md border p-3">
-                                                                            <div className="flex flex-col gap-2">
-                                                                                <div className="flex items-center justify-between gap-3">
-                                                                                    <div className="filter-checks">
-                                                                                        <Input
-                                                                                            id={
-                                                                                                inputId
-                                                                                            }
-                                                                                            className="demo1"
-                                                                                            type="checkbox"
-                                                                                            checked={
-                                                                                                item.visible ??
-                                                                                                true
-                                                                                            }
-                                                                                            disabled={
-                                                                                                readOnly
-                                                                                            }
-                                                                                            onChange={
-                                                                                                handleToggleVisible
-                                                                                            }
-                                                                                        />
-                                                                                        <Label
-                                                                                            htmlFor={
-                                                                                                inputId
-                                                                                            }
-                                                                                            data-on-label="ON"
-                                                                                            data-off-label="OFF"
-                                                                                        />
-                                                                                    </div>
-                                                                                    <div className="mr-auto text-muted-foreground/40">
-                                                                                        (visibility)
-                                                                                    </div>
-                                                                                    {!readOnly &&
-                                                                                        !(
-                                                                                            isLast &&
-                                                                                            isBlank
-                                                                                        ) && (
-                                                                                            <Button
-                                                                                                type="button"
-                                                                                                variant="outline"
-                                                                                                className="h-9 px-3"
-                                                                                                onClick={
-                                                                                                    handleRemove
-                                                                                                }
-                                                                                            >
-                                                                                                Remove
-                                                                                            </Button>
-                                                                                        )}
-                                                                                </div>
-                                                                                <Input
-                                                                                    value={
-                                                                                        item.title ??
-                                                                                        ''
-                                                                                    }
-                                                                                    placeholder="Filter title"
-                                                                                    readOnly={
-                                                                                        readOnly
-                                                                                    }
-                                                                                    onChange={(e) =>
-                                                                                        handleTitleChange(
-                                                                                            e.target
-                                                                                                .value,
-                                                                                        )
-                                                                                    }
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                    </motion.div>
-                                                                );
-                                                            })}
-                                                        </AnimatePresence>
-                                                    </motion.div>
-                                                </LayoutGroup>
-                                            );
-                                        })()}
+                                    <div className="space-y-2">
+                                        <FilterListField
+                                            field={f}
+                                            data={data}
+                                            setData={setData}
+                                            readOnly={readOnly}
+                                        />
                                         {!readOnly && (
                                             <p className="text-xs text-muted-foreground">
                                                 Fill a row to automatically add the next one.
                                             </p>
                                         )}
-                                    </motion.div>
+                                    </div>
                                 ) : f.type === 'file' ? (
                                     <div className="flex flex-col space-y-3">
                                         <Label

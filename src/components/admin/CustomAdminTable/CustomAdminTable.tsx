@@ -20,6 +20,10 @@ const getDefaultFieldValue = (field: AdminFormField) => {
 const buildInitialFormData = (fields: AdminFormField[]) => {
     return fields.reduce<Record<string, any>>((acc, field) => {
         acc[field.name] = getDefaultFieldValue(field);
+        if (field.type === 'season' && field.secondaryName) {
+            acc[field.secondaryName] =
+                field.secondaryEmptyValue !== undefined ? field.secondaryEmptyValue : '';
+        }
         return acc;
     }, {});
 };
@@ -29,6 +33,9 @@ const sanitizeFormData = (fields: AdminFormField[], data: Record<string, any>) =
     fields.forEach((field) => {
         if (!field.sanitize) return;
         next[field.name] = field.sanitize(next[field.name]);
+        if (field.type === 'season' && field.secondaryName && field.secondarySanitize) {
+            next[field.secondaryName] = field.secondarySanitize(next[field.secondaryName]);
+        }
     });
     return next;
 };
@@ -41,6 +48,12 @@ const buildFormDataFromItem = (fields: AdminFormField[], item: Record<string, an
         }
         const value = field.getValue ? field.getValue(item) : item?.[field.name];
         acc[field.name] = value ?? getDefaultFieldValue(field);
+        if (field.type === 'season' && field.secondaryName) {
+            const secondaryValue = item?.[field.secondaryName];
+            acc[field.secondaryName] =
+                secondaryValue ??
+                (field.secondaryEmptyValue !== undefined ? field.secondaryEmptyValue : '');
+        }
         return acc;
     }, {});
 };
