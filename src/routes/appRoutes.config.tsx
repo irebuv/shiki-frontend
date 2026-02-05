@@ -4,7 +4,7 @@ import Home from '@/pages/HomePage';
 import Anime from '@/pages/anime/AnimePage';
 import LoginPage from '@/pages/user/LoginPage';
 import NotFoundPage from '@/pages/NotFoundPage';
-import AnimeDetailPage from '@/pages/anime/AnimeDetailPage';
+import AnimeDetailPage from '@/pages/anime/AnimeDetailPage/AnimeDetailPage';
 
 type NavGroup = 'main' | 'profile';
 
