@@ -8,10 +8,21 @@ export type AdminFilterItem = {
 
 export type FiltersMap = Record<string, AdminFilterItem[]>;
 
-export type StudioOption = {
+export type FilterOption = {
     id: number;
     name: string;
 };
+
+export type FilterItem =
+    | string
+    | number
+    | {
+          id?: string | number;
+          title?: string;
+          label?: string;
+          name?: string;
+          value?: string | number;
+      };
 
 export interface Anime {
     id: number;
@@ -46,7 +57,9 @@ export interface AnimeResponse {
     availableFilters?: FiltersMap | Record<string, any>;
     filters?: FiltersMap | Record<string, any>;
     filtersList?: FiltersMap | null;
-    studios?: StudioOption[];
+    studios?: FilterOption[];
+    season?: FilterItem[];
+    year?: FilterItem[];
 }
 
 export type AnimeFilterPreset = {

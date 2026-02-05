@@ -1,11 +1,12 @@
-import AgeRating from './filters/AgeRating';
 import Filter from './filters/Filter';
 import FilterBy from './filters/FilterBy';
 import FilterPresets from './filters/FilterPresets';
 import Kind from './filters/Kind';
 import Sorts from './filters/Sorts';
 import { useEffect, useMemo } from 'react';
-import type { AnimeFilterPreset } from '@/types/anime';
+import type { AnimeFilterPreset, FilterItem } from '@/types/anime';
+import { AGE_RATING_OPTIONS } from '@/lib/filters/ageRating';
+import { buildSeasonYearLabelMap } from '@/lib/filters/seasonYear';
 
 export { ChosenFilters } from './filters/ChosenFilters';
 
@@ -14,9 +15,13 @@ export default function AnimeFilters({
     setFilters,
     availableFilters = {},
     studios = [],
+    season = [],
+    year = [],
     activeFilters = [],
     activeStudios = [],
     activeAgeRating = [],
+    activeSeason = [],
+    activeYear = [],
     presets = [],
     presetsLoading = false,
     canSavePreset = false,
@@ -29,9 +34,13 @@ export default function AnimeFilters({
     setFilters: any;
     availableFilters?: Record<string, any>;
     activeFilters?: string[];
-    studios?: { id: number; name: string }[];
+    studios?: FilterItem[];
+    season?: FilterItem[];
+    year?: FilterItem[];
     activeStudios?: string[];
     activeAgeRating?: string[];
+    activeSeason?: string[];
+    activeYear?: string[];
     presets?: AnimeFilterPreset[];
     presetsLoading?: boolean;
     canSavePreset?: boolean;
@@ -75,6 +84,20 @@ export default function AnimeFilters({
 
     const hasFilterData = Object.keys(visibleFiltersMap).length > 0;
 
+    const yearOptions = useMemo(() => {
+        const labelMap = buildSeasonYearLabelMap();
+        return (Array.isArray(year) ? year : []).map((item) => {
+            if (typeof item === 'string' || typeof item === 'number') {
+                const key = String(item);
+                return { value: key, label: labelMap.get(key) ?? key };
+            }
+            const value = item?.value ?? item?.id ?? item?.name ?? item?.title ?? item?.label ?? '';
+            const key = String(value);
+            const label = item?.label ?? item?.name ?? item?.title ?? labelMap.get(key) ?? key;
+            return { value: key, label };
+        });
+    }, [year]);
+
     useEffect(() => {
         if (!activeFilters.length) return;
         if (!hasFilterData) return;
@@ -102,11 +125,27 @@ export default function AnimeFilters({
                     />
                 </Filter>
             )}
-            <Filter title={'Sort BY'} storageKey="sort">
+            <Filter title={'Sort BY'} storageKey="sort" defaultOpen={true}>
                 <Sorts sort={filters?.sort ?? 'updated_at:desc'} setFilters={setFilters} />
             </Filter>
-            <Filter title={'Type'} storageKey="type">
+            <Filter title={'Type'} storageKey="type" defaultOpen={true}>
                 <Kind value={filters?.type} setFilters={setFilters} />
+            </Filter>
+            <Filter title={'Year'} storageKey="released_year">
+                <FilterBy
+                    items={yearOptions}
+                    setFilters={setFilters}
+                    selected={activeYear}
+                    paramKey='year'
+                />
+            </Filter>
+            <Filter title={'Season'} storageKey="season">
+                <FilterBy
+                    items={season}
+                    setFilters={setFilters}
+                    selected={activeSeason}
+                    paramKey='season'
+                />
             </Filter>
             {Object.entries(visibleFiltersMap).map(([key, items]) => (
                 <Filter key={key} storageKey={key} title={key}>
@@ -129,7 +168,12 @@ export default function AnimeFilters({
                 </Filter>
             )}
             <Filter title={'Rating'} storageKey="age_rating">
-                <AgeRating setFilters={setFilters} selected={activeAgeRating} />
+                <FilterBy
+                    items={AGE_RATING_OPTIONS}
+                    setFilters={setFilters}
+                    selected={activeAgeRating}
+                    paramKey="age_rating"
+                />
             </Filter>
         </div>
     );

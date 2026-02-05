@@ -21,6 +21,8 @@ export default function AnimePage() {
             filters: [],
             studios: [],
             age_rating: [],
+            season: [],
+            year: [],
         },
     });
 
@@ -29,6 +31,8 @@ export default function AnimePage() {
     const activeStudios = normalizeList(filters?.studios);
     const activeTypes = normalizeList(filters?.type);
     const activeAgeRate = normalizeList(filters?.age_rating);
+    const activeSeasons = normalizeList(filters?.season);
+    const activeYear = normalizeList(filters?.year);
 
     console.log('data-home', data, activeFilters);
 
@@ -64,8 +68,18 @@ export default function AnimePage() {
             filters: activeFilters,
             studios: activeStudios,
             age_rating: activeAgeRate,
+            season: activeSeasons,
+            year: activeYear,
         }),
-        [filters?.sort, activeTypes, activeFilters, activeStudios, activeAgeRate],
+        [
+            filters?.sort,
+            activeTypes,
+            activeFilters,
+            activeStudios,
+            activeAgeRate,
+            activeSeasons,
+            activeYear,
+        ],
     );
 
     const applyPreset = (preset: AnimeFilterPreset) => {
@@ -113,12 +127,15 @@ export default function AnimePage() {
     return (
         <div className="w-full mx-auto flex flex-col gap-5 px-7 mt-2">
             <div className={'grid grid-cols-5 gap-3'}>
-
                 <AnimeFilters
                     filters={filters}
                     activeFilters={activeFilters}
                     availableFilters={availableFilters}
+                    activeSeason={activeSeasons}
+                    activeYear={activeYear}
                     studios={data?.studios ?? []}
+                    season={data?.season ?? []}
+                    year={data?.year ?? []}
                     activeStudios={activeStudios}
                     activeAgeRating={activeAgeRate}
                     setFilters={setFilters}
@@ -148,6 +165,8 @@ export default function AnimePage() {
                         activeStudios={activeStudios}
                         activeFilters={activeFilters}
                         activeAgeRating={activeAgeRate}
+                        activeSeason={activeSeasons}
+                        activeYear={activeYear}
                         setFilters={setFilters}
                     />
                     <AnimeList data={data?.anime} />

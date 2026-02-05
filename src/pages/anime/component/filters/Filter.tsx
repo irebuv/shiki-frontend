@@ -9,7 +9,7 @@ type FilterProps = {
     storageKey: string;
 };
 
-export default function Filter({ title, children, storageKey, defaultOpen = true }: FilterProps) {
+export default function Filter({ title, children, storageKey, defaultOpen = false }: FilterProps) {
     const [open, setOpen] = useLocalStorage<boolean>(`filters:open:${storageKey}`, defaultOpen);
 
     return (

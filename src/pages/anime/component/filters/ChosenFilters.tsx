@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { updateListFilter } from '@/lib/filterUtils';
-import { AGE_RATING_OPTIONS } from '@/lib/ageRating';
+import { AGE_RATING_OPTIONS } from '@/lib/filters/ageRating';
+import { buildSeasonYearLabelMap } from '@/lib/filters/seasonYear';
 import { useEffect, useMemo, useState } from 'react';
 import type { AnimeSetFilters } from '../../types';
 
@@ -12,6 +13,8 @@ type ChosenFiltersProps = {
     activeStudios: string[];
     activeAgeRating: string[];
     activeFilters: string[];
+    activeYear: string[];
+    activeSeason: string[];
     setFilters: AnimeSetFilters;
 };
 
@@ -28,6 +31,13 @@ const TYPE_LABEL_MAP: Record<string, string> = {
 const AGE_RATING_MAP = new Map<string, string>(
     AGE_RATING_OPTIONS.map((option) => [String(option.value), option.label]),
 );
+const YEAR_LABEL_MAP = buildSeasonYearLabelMap();
+const SEASON_LABEL_MAP: Record<string, string> = {
+    winter: 'Winter',
+    spring: 'Spring',
+    summer: 'Summer',
+    fall: 'Fall',
+};
 
 export function ChosenFilters({
     availableFilters,
@@ -36,12 +46,16 @@ export function ChosenFilters({
     activeStudios,
     activeFilters,
     activeAgeRating,
+    activeYear,
+    activeSeason,
     setFilters,
 }: ChosenFiltersProps) {
     const hasAny =
         activeTypes.length > 0 ||
         activeStudios.length > 0 ||
         activeFilters.length > 0 ||
+        activeYear.length > 0 ||
+        activeSeason.length > 0 ||
         activeAgeRating.length > 0;
     const [hidden, setHidden] = useLocalStorage<boolean>('anime:chosen:collapsed', false);
     const [isGone, setGone] = useState(hidden);
@@ -97,6 +111,9 @@ export function ChosenFilters({
     const removeStudio = (value: string) =>
         setFilters(updateListFilter('studios', activeStudios, value));
     const removeType = (value: string) => setFilters(updateListFilter('type', activeTypes, value));
+    const removeSeason = (value: string) =>
+        setFilters(updateListFilter('season', activeSeason, value));
+    const removeYear = (value: string) => setFilters(updateListFilter('year', activeYear, value));
     const removeAgeRate = (value: string) =>
         setFilters(updateListFilter('age_rating', activeAgeRating, value));
 
@@ -106,6 +123,8 @@ export function ChosenFilters({
             studios: undefined,
             filters: undefined,
             age_rating: undefined,
+            season: undefined,
+            year: undefined,
         });
     };
 
@@ -162,7 +181,11 @@ export function ChosenFilters({
                 <Button variant="clear" onClick={clearAll}>
                     Clear all
                 </Button>
-                <Button variant="toggle" className="mr-1" onClick={() => (hidden ? show() : hide())}>
+                <Button
+                    variant="toggle"
+                    className="mr-1"
+                    onClick={() => (hidden ? show() : hide())}
+                >
                     {hidden ? 'Show list' : 'Hide list'}
                 </Button>
                 {renderGroup(
@@ -170,6 +193,20 @@ export function ChosenFilters({
                     activeTypes,
                     (value) => TYPE_LABEL_MAP[value] ?? value,
                     removeType,
+                    hidden,
+                )}
+                {renderGroup(
+                    'Year',
+                    activeYear,
+                    (value) => YEAR_LABEL_MAP.get(value) ?? value,
+                    removeYear,
+                    hidden,
+                )}
+                {renderGroup(
+                    'Season',
+                    activeSeason,
+                    (value) => SEASON_LABEL_MAP[value] ?? value,
+                    removeSeason,
                     hidden,
                 )}
                 {renderGroup(

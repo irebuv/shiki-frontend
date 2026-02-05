@@ -1,7 +1,4 @@
-type FilterItem =
-    | string
-    | number
-    | { id?: string | number; title?: string; name?: string; value?: string | number };
+import type { FilterItem } from '@/types/anime';
 
 type Props = {
     items: FilterItem[];
@@ -25,9 +22,9 @@ export default function FilterBy({
             const str = String(el);
             return { id: str, title: str, value: str };
         }
-        const value = el.value ?? el.id ?? el.name ?? el.title ?? '';
+        const value = el.value ?? el.id ?? el.name ?? el.title ?? el.label ?? '';
         const id = el.id ?? value ?? '';
-        const title = el.title ?? el.name ?? String(value ?? id);
+        const title = el.title ?? el.label ?? el.name ?? String(value ?? id);
         return { id: String(id), title: title, value: String(value) };
     };
 

@@ -18,6 +18,8 @@ yarn-error.log*
 # editor settings
 .idea
 .vscode
+.codex
+AGENTS.md
 
 # system files
 .DS_Store

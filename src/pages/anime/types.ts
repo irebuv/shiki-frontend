@@ -5,6 +5,8 @@ export type AnimeFiltersState = {
     filters: string[] | string;
     studios?: string[] | string;
     age_rating?: string[] | string;
+    season?: string[] | string;
+    year?: string[] | string;
 };
 
 export type AnimeSetFilters = (values: Partial<AnimeFiltersState>) => void;

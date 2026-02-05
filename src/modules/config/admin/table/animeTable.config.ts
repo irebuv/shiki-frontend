@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import type { AdminFormField, AdminFormFieldOption } from '@/types/admin/adminTable';
 import { imageUrl } from '@/lib/imageUrl';
-import { AGE_RATING_OPTIONS } from '@/lib/ageRating';
+import { AGE_RATING_OPTIONS } from '@/lib/filters/ageRating';
+import { buildSeasonYearOptions } from '@/lib/filters/seasonYear';
 
 const AGE_RATING_VALUES = AGE_RATING_OPTIONS.map((option) => String(option.value));
 const SEASON_OPTIONS: AdminFormFieldOption[] = [
@@ -10,28 +11,6 @@ const SEASON_OPTIONS: AdminFormFieldOption[] = [
     { value: 'summer', label: 'Summer' },
     { value: 'fall', label: 'Fall' },
 ];
-
-const buildSeasonYearOptions = () => {
-    const currentYear = new Date().getFullYear();
-    const options: AdminFormFieldOption[] = [];
-    for (let year = currentYear + 5; year >= currentYear - 10; year -= 1) {
-        options.push({ value: year, label: String(year) });
-    }
-    const bucketStart = Math.floor((currentYear - 11) / 5) * 5;
-    for (let year = bucketStart; year >= 2005; year -= 5) {
-        if (year === 2010) {
-            options.push({ value: 2009, label: '2009-2005' });
-            continue;
-        }
-        if (year === 2005) {
-            options.push({ value: 2004, label: '2004-2000' });
-            continue;
-        }
-        options.push({ value: year, label: `${year}-${year - 5}` });
-    }
-    options.push({ value: 1999, label: 'Before 2000' });
-    return options;
-};
 
 const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[] => {
     const hasStudios = studioOptions.length > 0;
@@ -110,10 +89,9 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
             validation: z
                 .string()
                 .refine(
-                    (value) =>
-                        ['airing', 'planned', 'released'].includes(value),
+                    (value) => ['airing', 'planned', 'released'].includes(value),
                     'Select a valid status',
-            ),
+                ),
         },
         {
             id: 'age_rating',
