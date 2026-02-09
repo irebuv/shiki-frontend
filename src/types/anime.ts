@@ -39,7 +39,7 @@ export interface Anime {
     age_rating?: string | null;
     episodes?: number | null;
     episode_time?: number | null;
-    studio?: { id: number; name: string } | null;
+    studio?: { id: number; name: string; image?:string } | null;
     created_at?: string | null;
     updated_at?: string | null;
     filters?: { id: number; pivot?: { anime_id: number; filter_id: number } }[];
@@ -66,6 +66,35 @@ export interface AnimeResponse {
     studios?: FilterOption[];
     season?: FilterItem[];
     year?: FilterItem[];
+}
+
+export type EpisodeMediaItem = {
+    id: number;
+    type?: string | null;
+    quality?: string | null;
+    path?: string | null;
+    url?: string | null;
+    mime?: string | null;
+    size?: number | null;
+    duration?: number | null;
+    language?: string | null;
+    is_primary?: boolean;
+};
+
+export type EpisodeItem = {
+    id: number;
+    season_number?: number | null;
+    episode_number?: number | null;
+    title?: string | null;
+    description?: string | null;
+    duration?: number | null;
+    air_date?: string | null;
+    media?: EpisodeMediaItem[];
+};
+
+export interface AnimeDetailResponse {
+    anime: Anime;
+    episode_items?: EpisodeItem[];
 }
 
 export type AnimeFilterPreset = {

@@ -17,6 +17,9 @@ export function AdminTableActionButtons({
         <div className="flex justify-center">
             {actions.map((action, index) => {
                 const IconComponent = LucidIcons[action.icon] as React.ElementType;
+                const isButtonAction = action.method === 'button' || typeof action.onClick === 'function';
+                const isDeleteAction = action.method === 'delete' || action.label === 'Delete';
+
                 if (isModal) {
                     if (action.label === "View") {
                         return (
@@ -41,7 +44,7 @@ export function AdminTableActionButtons({
                         );
                     }
                 }
-                if (action.label === "Delete") {
+                if (isDeleteAction) {
                     const deleteHref =
                         action.href?.(row.id, row) ?? deleteUrl?.(row.id, row);
                     if (!deleteHref) return null;
@@ -56,6 +59,20 @@ export function AdminTableActionButtons({
                         </Button>
                     );
                 }
+
+                if (isButtonAction) {
+                    if (!action.onClick) return null;
+                    return (
+                        <Button
+                            key={index}
+                            className={cn("w-10 h-10", action.className)}
+                            onClick={() => action.onClick?.(row)}
+                        >
+                            <IconComponent size={18} />
+                        </Button>
+                    );
+                }
+
                 const href = action.href?.(row.id, row);
                 if (!href) return null;
 

@@ -1,17 +1,19 @@
-import api from "@/api/axios";
-import { QueryState } from "@/components/custom/QueryState";
-import { LoadingOverlay } from "@/components/shared/LoadingOverlay";
-import { imageUrl } from "@/lib/imageUrl";
-import type { Anime } from "@/types/anime";
-import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom"
-import { AnimeDetailHeader } from "./components/AnimeDetailHeader";
-import { AnimeDetailInfoGrid } from "./components/AnimeDetailInfoGrid";
-import { AnimeCoverCard } from "./components/AnimeCoverCard";
+import api from '@/api/axios';
+import { QueryState } from '@/components/custom/QueryState';
+import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
+import { imageUrl } from '@/lib/imageUrl';
+import type { Anime, AnimeDetailResponse, EpisodeItem } from '@/types/anime';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { AnimeDetailHeader } from './components/AnimeDetailHeader';
+import { AnimeDetailInfoGrid } from './components/AnimeDetailInfoGrid';
+import { AnimeCoverCard } from './components/AnimeCoverCard';
+import { AnimePlayer } from './components/AnimePlayer';
 
 export default function AnimeDetailPage() {
-    const {slug} = useParams<{slug: string}>();
+    const { slug } = useParams<{ slug: string }>();
     const [anime, setAnime] = useState<Anime | null>(null);
+    const [episodeItems, setEpisodeItems] = useState<EpisodeItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<any>(null);
 
@@ -20,16 +22,19 @@ export default function AnimeDetailPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await api.get(`/anime/${slug}`);
+            const res = await api.get<AnimeDetailResponse>(`/anime/${slug}`);
             setAnime(res.data.anime);
+            setEpisodeItems(Array.isArray(res.data.episode_items) ? res.data.episode_items : []);
         } catch (err) {
             setError(err);
         } finally {
             setLoading(false);
         }
-    }, [slug])
+    }, [slug]);
 
-    useEffect(() => {load();}, [load]);
+    useEffect(() => {
+        load();
+    }, [load]);
 
     const typeLabelMap: Record<string, string> = {
         tv_short: 'TV Short',
@@ -44,9 +49,7 @@ export default function AnimeDetailPage() {
         anime?.rating !== null && anime?.rating !== undefined && anime?.rating !== ''
             ? String(anime.rating)
             : '-';
-    const coverUrl =
-        anime?.featured_image_url ??
-        imageUrl(anime?.featured_image);
+    const coverUrl = anime?.featured_image_url ?? imageUrl(anime?.featured_image);
 
     return (
         <QueryState
@@ -78,20 +81,23 @@ export default function AnimeDetailPage() {
                                 season={anime?.season}
                                 ageRating={anime?.age_rating}
                                 studioName={anime?.studio?.name ?? null}
+                                studioImage={anime?.studio?.image ?? null}
                                 episodes={anime?.episodes}
                                 episodeTime={anime?.episode_time}
                                 typeLabelMap={typeLabelMap}
                             />
                         </div>
 
-                        <AnimeCoverCard
-                            coverUrl={coverUrl}
-                            title={anime?.name ?? 'Anime cover'}
-                        />
+                        <AnimeCoverCard coverUrl={coverUrl} title={anime?.name ?? 'Anime cover'} />
                     </div>
                 </div>
-                <div className="col-span-2 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">fff</div>
+                <div className="col-span-2 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+                    fff
+                </div>
+                <div className="col-span-7 rounded-2xl bg-background-light/60 p-1 shadow-sm ring-1 ring-black/10">
+                    <AnimePlayer episodes={episodeItems} />
+                </div>
             </div>
         </QueryState>
-    )
+    );
 }

@@ -45,11 +45,6 @@ export const AnimeDetailHeader = ({
         <div className="flex flex-wrap items-center gap-3">
             <RatingBadge rating={ratingLabel} />
             <div className="flex flex-wrap gap-2 text-xs">
-                {status && (
-                    <span className="rounded-full bg-emerald-500/15 px-2 py-1 font-semibold text-emerald-700">
-                        {capitalize(status)}
-                    </span>
-                )}
                 {type && (
                     <span className="rounded-full bg-slate-500/15 px-2 py-1 font-semibold text-slate-700">
                         {typeLabelMap[type] ?? type}
