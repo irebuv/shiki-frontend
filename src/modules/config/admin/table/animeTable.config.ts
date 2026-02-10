@@ -3,6 +3,7 @@ import type { AdminFormField, AdminFormFieldOption } from '@/types/admin/adminTa
 import { imageUrl } from '@/lib/imageUrl';
 import { AGE_RATING_OPTIONS } from '@/lib/filters/ageRating';
 import { buildSeasonYearOptions } from '@/lib/filters/seasonYear';
+import type { AdminTableRow } from '@/types/admin/adminTable';
 
 const AGE_RATING_VALUES = AGE_RATING_OPTIONS.map((option) => String(option.value));
 const SEASON_OPTIONS: AdminFormFieldOption[] = [
@@ -160,7 +161,7 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
                 .or(z.null())
                 .refine((f) => !f || f.size <= 8_000_000, 'Image must be <= 8MB')
                 .refine((f) => !f || /^image\//.test(f.type), 'Only images'),
-            previewUrl: (item) => (item?.featured_image ? imageUrl(item.featured_image) : null),
+            previewUrl: (item) => (item?.featured_image ? imageUrl(item.featured_image) ?? null : null),
         },
     ];
 };
@@ -175,11 +176,18 @@ const columns = [
     { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
 ];
 
-const actions = [
+const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void }) => [
     {
         label: 'View',
         icon: 'Eye',
         className: 'cursor-pointer rounded-lg bg-sky-600 p-2 text-white hover:opacity-90',
+    },
+    {
+        label: 'Video',
+        icon: 'Clapperboard',
+        method: 'button' as const,
+        onClick: options?.onVideoClick,
+        className: 'ms-2 cursor-pointer rounded-lg bg-amber-600 p-2 text-white hover:opacity-90',
     },
     {
         label: 'Edit',
@@ -193,9 +201,12 @@ const actions = [
     },
 ];
 
-export const buildAnimeTableConfig = (studioOptions: AdminFormFieldOption[] = []) => ({
+export const buildAnimeTableConfig = (
+    studioOptions: AdminFormFieldOption[] = [],
+    options?: { onVideoClick?: (row: AdminTableRow) => void },
+) => ({
     columns,
-    actions,
+    actions: buildActions(options),
     formFields: buildFormFields(studioOptions),
 });
 
@@ -209,23 +220,6 @@ export const animeTableConfig = {
         { label: 'Updated Date', key: 'updated_at', className: 'border p-4 text-center' },
         { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
     ],
-    actions: [
-        {
-            label: 'View',
-            icon: 'Eye',
-            className: 'cursor-pointer rounded-lg bg-sky-600 p-2 text-white hover:opacity-90',
-        },
-        {
-            label: 'Edit',
-            icon: 'Pencil',
-            className:
-                'ms-2 cursor-pointer rounded-lg bg-green-600 p-2 text-white hover:opacity-90',
-        },
-        {
-            label: 'Delete',
-            icon: 'Trash',
-            className: 'ms-2 cursor-pointer rounded-lg bg-red-600 p-2 text-white hover:opacity-90',
-        },
-    ],
+    actions: buildActions(),
     formFields: buildFormFields([]),
 };

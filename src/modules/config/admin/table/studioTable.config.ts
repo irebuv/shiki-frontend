@@ -30,7 +30,7 @@ const formFields: AdminFormField[] = [
             .or(z.null())
             .refine((f) => !f || f.size <= 8_000_000, 'Image must be <= 8MB')
             .refine((f) => !f || /^image\//.test(f.type), 'Only images'),
-        previewUrl: (item) => (item?.image ? imageUrl(item.image) : null),
+        previewUrl: (item) => (item?.image ? imageUrl(item.image) ?? null : null),
     },
 ];
 

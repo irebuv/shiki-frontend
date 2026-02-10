@@ -7,7 +7,7 @@ export function ThemeToggle({ className }: React.HTMLAttributes<HTMLDivElement>)
         <div className={cn("flex items-center gap-2", className)}>
             <button
                 onClick={(e) => toggleTheme(e)}
-                className="rounded-md border px-3 py-2 cursor-pointer"
+                className="rounded-md border px-3 py-2 cursor-pointer border-foreground/20"
             >
                 {resolvedTheme === 'dark' ? '🌙' : '☀️'}
             </button>

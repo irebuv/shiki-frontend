@@ -23,6 +23,7 @@ export function AnimeCard({ anime }: Props) {
     const [open, setOpen] = useState(false);
     const ARROW_H = 20;
     const arrowRef = useRef<SVGSVGElement | null>(null);
+    const coverUrl = imageUrl(anime.featured_image);
 
     const { refs, floatingStyles, context, placement, middlewareData } = useFloating({
         open,
@@ -59,11 +60,15 @@ export function AnimeCard({ anime }: Props) {
         <>
             {/* CARD */}
             <Link to={`/anime/${anime.slug}`} ref={refs.setReference} {...getReferenceProps()} className="cursor-pointer">
-                <img
-                    className="aspect-2/3 w-full rounded-lg object-cover"
-                    src={imageUrl(anime.featured_image)}
-                    alt={anime.name}
-                />
+                {coverUrl ? (
+                    <img
+                        className="aspect-2/3 w-full rounded-lg object-cover"
+                        src={coverUrl}
+                        alt={anime.name}
+                    />
+                ) : (
+                    <div className="aspect-2/3 w-full rounded-lg bg-muted/50" />
+                )}
                 <p className="mt-2 text-sm line-clamp-2">{anime.name}</p>
             </Link>
 
@@ -96,11 +101,15 @@ export function AnimeCard({ anime }: Props) {
                             />
                             {/* content */}
                             <div className="flex gap-3">
-                                <img
-                                    src={imageUrl(anime.featured_image)}
-                                    alt={anime.name}
-                                    className="h-24 w-16 rounded-md object-cover"
-                                />
+                                {coverUrl ? (
+                                    <img
+                                        src={coverUrl}
+                                        alt={anime.name}
+                                        className="h-24 w-16 rounded-md object-cover"
+                                    />
+                                ) : (
+                                    <div className="h-24 w-16 rounded-md bg-muted/50" />
+                                )}
                                 <div className="min-w-0">
                                     <h4 className="truncate text-sm font-semibold">{anime.name}</h4>
                                 </div>

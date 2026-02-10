@@ -55,7 +55,7 @@ export function ExpandableText({ text, lines = 5, className }: Props) {
                 </div>
 
                 {!expanded && canToggle && (
-                    <div className="pointer-events-none absolute bottom-0 left-0 h-10 w-full bg-linear-to-t from-background to-transparent" />
+                    <div className="pointer-events-none absolute bottom-0 left-0 h-10 w-full bg-linear-to-t from-background-light/70 to-transparent" />
                 )}
             </div>
 
