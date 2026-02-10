@@ -34,8 +34,6 @@ export default function AnimePage() {
     const activeSeasons = normalizeList(filters?.season);
     const activeYear = normalizeList(filters?.year);
 
-    console.log('data-home', data, activeFilters);
-
     const [presets, setPresets] = useState<AnimeFilterPreset[]>([]);
     const [presetsLoading, setPresetsLoading] = useState(false);
 

@@ -8,7 +8,7 @@ type AppLayoutProps = {
 
 export default function MainLayout({children, className}: AppLayoutProps) {
     return(
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-screen flex-col text-foreground">
             <Header/>
             <div className={`flex flex-1 min-h-full ${className}`}>
                 {children}

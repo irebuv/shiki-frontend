@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { EpisodeItem, EpisodeMediaItem } from '@/types/anime';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -50,6 +51,12 @@ type TranscodeProgressResponse = {
 
 const PROGRESS_POLL_INTERVAL_MS = 10_000;
 const VIDEO_FILE_REGEX = /\.(mp4|mkv|avi|mov|webm)$/i;
+const DEFAULT_SEASON_NUMBER = 1;
+const QUALITY_OPTIONS = ['1080', '720', '480'] as const;
+const LANGUAGE_OPTIONS = [
+    { value: 'ru', label: 'Russian (ru)' },
+    { value: 'en', label: 'English (en)' },
+] as const;
 
 const toIntOrNull = (value: string) => {
     const parsed = Number(value);
@@ -59,10 +66,9 @@ const toIntOrNull = (value: string) => {
 const clampPercent = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 
 const formatEpisodeLabel = (episode: EpisodeItem) => {
-    const season = episode.season_number ?? 1;
     const number = episode.episode_number ?? '?';
     const title = episode.title ? ` - ${episode.title}` : '';
-    return `S${season}E${number}${title}`;
+    return `E${number}${title}`;
 };
 
 const isVideoFile = (file: File) => file.type.startsWith('video/') || VIDEO_FILE_REGEX.test(file.name);
@@ -72,7 +78,6 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
     const [loading, setLoading] = useState(false);
     const [busy, setBusy] = useState(false);
 
-    const [seasonNumber, setSeasonNumber] = useState('1');
     const [episodeNumber, setEpisodeNumber] = useState('');
     const [episodeTitle, setEpisodeTitle] = useState('');
 
@@ -93,7 +98,6 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
 
     const [dropDialogOpen, setDropDialogOpen] = useState(false);
     const [droppedVideo, setDroppedVideo] = useState<File | null>(null);
-    const [dropSeasonNumber, setDropSeasonNumber] = useState('1');
     const [dropEpisodeNumber, setDropEpisodeNumber] = useState('');
     const [dropEpisodeTitle, setDropEpisodeTitle] = useState('');
     const [dropQualities, setDropQualities] = useState('1080');
@@ -222,22 +226,27 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
     const createEpisodeRecord = useCallback(
         async (seasonNo: number, episodeNo: number, title?: string) => {
             if (!anime?.id) return null;
+            try {
+                const res = await api.post<EpisodeUpsertResponse>(`/admin/anime/${anime.id}/episodes`, {
+                    season_number: seasonNo,
+                    episode_number: episodeNo,
+                    title: title?.trim() || undefined,
+                });
 
-            const res = await api.post<EpisodeUpsertResponse>(`/admin/anime/${anime.id}/episodes`, {
-                season_number: seasonNo,
-                episode_number: episodeNo,
-                title: title?.trim() || undefined,
-            });
+                if (res.data.message) toast.success(res.data.message);
+                const createdEpisodeId = res.data.episode?.id ?? null;
 
-            if (res.data.message) toast.success(res.data.message);
-            const createdEpisodeId = res.data.episode?.id ?? null;
+                await loadEpisodes();
+                if (createdEpisodeId) {
+                    setSelectedEpisodeId(createdEpisodeId);
+                }
 
-            await loadEpisodes();
-            if (createdEpisodeId) {
-                setSelectedEpisodeId(createdEpisodeId);
+                return createdEpisodeId;
+            } catch (error: any) {
+                const serverMessage = String(error?.response?.data?.message ?? '').trim();
+                toast.error(serverMessage || 'Failed to save episode.');
+                return null;
             }
-
-            return createdEpisodeId;
         },
         [anime?.id, loadEpisodes],
     );
@@ -249,11 +258,9 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
             return;
         }
 
-        const seasonNo = toIntOrNull(seasonNumber) ?? 1;
-
         setBusy(true);
         try {
-            await createEpisodeRecord(seasonNo, episodeNo, episodeTitle);
+            await createEpisodeRecord(DEFAULT_SEASON_NUMBER, episodeNo, episodeTitle);
         } finally {
             setBusy(false);
         }
@@ -378,17 +385,41 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                     setTranscodeStage('failed');
                     setTranscodeLabel(output || serverMessage || 'Transcoding failed.');
                 }
+            } catch (error: any) {
+                const serverMessage = String(error?.response?.data?.message ?? '').trim();
+                const status = Number(error?.response?.status ?? 0);
+                if (status === 409) {
+                    toast.error(serverMessage || 'Another episode is already transcoding.');
+                } else if (serverMessage) {
+                    toast.error(serverMessage);
+                } else {
+                    toast.error('Upload failed.');
+                }
+                resetProgressState();
             } finally {
                 setBusy(false);
             }
         },
-        [anime?.id, transcodeStage, activeEpisodeId, startProgressPolling, pullTranscodeProgress],
+        [
+            anime?.id,
+            transcodeStage,
+            activeEpisodeId,
+            startProgressPolling,
+            pullTranscodeProgress,
+            resetProgressState,
+        ],
     );
 
     const openDropEpisodeDialog = useCallback(
         (file: File) => {
             if (!isVideoFile(file)) {
                 toast.error('Please drop a valid video file (mp4, mkv, avi, mov, webm).');
+                return;
+            }
+
+            const activeTranscoding = transcodeStage === 'probing' || transcodeStage === 'transcoding';
+            if (activeTranscoding) {
+                toast.error('Another episode is already transcoding.');
                 return;
             }
 
@@ -401,14 +432,13 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                     : 1;
 
             setDroppedVideo(file);
-            setDropSeasonNumber('1');
             setDropEpisodeNumber(String(nextEpisode));
             setDropEpisodeTitle('');
             setDropQualities(qualities);
             setDropLanguage(language);
             setDropDialogOpen(true);
         },
-        [episodes, qualities, language],
+        [episodes, qualities, language, transcodeStage],
     );
 
     const handleDropCreateAndStart = async () => {
@@ -417,7 +447,12 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
             return;
         }
 
-        const seasonNo = toIntOrNull(dropSeasonNumber) ?? 1;
+        const activeTranscoding = transcodeStage === 'probing' || transcodeStage === 'transcoding';
+        if (activeTranscoding) {
+            toast.error('Another episode is already transcoding.');
+            return;
+        }
+
         const episodeNo = toIntOrNull(dropEpisodeNumber);
         if (!episodeNo) {
             toast.error('Episode number is required.');
@@ -426,7 +461,11 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
 
         setBusy(true);
         try {
-            const episodeId = await createEpisodeRecord(seasonNo, episodeNo, dropEpisodeTitle);
+            const episodeId = await createEpisodeRecord(
+                DEFAULT_SEASON_NUMBER,
+                episodeNo,
+                dropEpisodeTitle,
+            );
             if (!episodeId) {
                 toast.error('Episode was saved but id is missing.');
                 return;
@@ -526,6 +565,103 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                         </div>
                     )}
 
+                    {dropDialogOpen && (
+                        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
+                            <div className="w-full max-w-xl rounded-xl border bg-background p-5 shadow-2xl">
+                                <div className="mb-4 space-y-1">
+                                    <h3 className="text-xl font-semibold">Create Episode From Dropped Video</h3>
+                                    <p className="text-sm text-muted-foreground break-all">
+                                        {droppedVideo
+                                            ? `File: ${droppedVideo.name}`
+                                            : 'Drop a video file to create an episode.'}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <Label>Episode</Label>
+                                        <Input
+                                            value={dropEpisodeNumber}
+                                            onChange={(e) => setDropEpisodeNumber(e.target.value)}
+                                            placeholder="1"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label>Title</Label>
+                                        <Input
+                                            value={dropEpisodeTitle}
+                                            onChange={(e) => setDropEpisodeTitle(e.target.value)}
+                                            placeholder="Optional title"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <Label>Qualities</Label>
+                                            <Select
+                                                value={dropQualities}
+                                                onValueChange={(value) => setDropQualities(value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select quality" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {QUALITY_OPTIONS.map((quality) => (
+                                                        <SelectItem key={quality} value={quality}>
+                                                            {quality}p
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label>Language</Label>
+                                            <Select
+                                                value={dropLanguage}
+                                                onValueChange={(value) => setDropLanguage(value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select language" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {LANGUAGE_OPTIONS.map((lang) => (
+                                                        <SelectItem key={lang.value} value={lang.value}>
+                                                            {lang.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-1">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => {
+                                                setDropDialogOpen(false);
+                                                setDroppedVideo(null);
+                                            }}
+                                            disabled={busy}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                void handleDropCreateAndStart();
+                                            }}
+                                            disabled={busy || !droppedVideo}
+                                        >
+                                            Create + Start
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <DialogHeader>
                         <DialogTitle>Video Manager</DialogTitle>
                         <DialogDescription>
@@ -537,23 +673,13 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                         <div className="space-y-4 overflow-y-auto pr-1">
                             <div className="rounded-xl border p-3 space-y-3">
                                 <h4 className="text-sm font-semibold">Episode</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <Label>Season</Label>
-                                        <Input
-                                            value={seasonNumber}
-                                            onChange={(e) => setSeasonNumber(e.target.value)}
-                                            placeholder="1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label>Episode</Label>
-                                        <Input
-                                            value={episodeNumber}
-                                            onChange={(e) => setEpisodeNumber(e.target.value)}
-                                            placeholder="1"
-                                        />
-                                    </div>
+                                <div>
+                                    <Label>Episode</Label>
+                                    <Input
+                                        value={episodeNumber}
+                                        onChange={(e) => setEpisodeNumber(e.target.value)}
+                                        placeholder="1"
+                                    />
                                 </div>
                                 <div>
                                     <Label>Title</Label>
@@ -578,19 +704,39 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                 <div className="grid grid-cols-2 gap-2">
                                     <div>
                                         <Label>Qualities</Label>
-                                        <Input
+                                        <Select
                                             value={qualities}
-                                            onChange={(e) => setQualities(e.target.value)}
-                                            placeholder="1080"
-                                        />
+                                            onValueChange={(value) => setQualities(value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select quality" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {QUALITY_OPTIONS.map((quality) => (
+                                                    <SelectItem key={quality} value={quality}>
+                                                        {quality}p
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div>
                                         <Label>Language</Label>
-                                        <Input
+                                        <Select
                                             value={language}
-                                            onChange={(e) => setLanguage(e.target.value)}
-                                            placeholder="ru"
-                                        />
+                                            onValueChange={(value) => setLanguage(value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select language" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {LANGUAGE_OPTIONS.map((lang) => (
+                                                    <SelectItem key={lang.value} value={lang.value}>
+                                                        {lang.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -627,8 +773,33 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                     {episodes.map((episode) => {
                                         const isSelected = episode.id === selectedEpisodeId;
                                         const isActive = episode.id === activeEpisodeId;
+                                        const isTranscodeRunning =
+                                            isActive &&
+                                            (transcodeStage === 'probing' || transcodeStage === 'transcoding');
+                                        const isTranscodeDone = isActive && transcodeStage === 'done';
+                                        const isTranscodeFailed = isActive && transcodeStage === 'failed';
                                         const showEpisodeOverlay =
                                             isActive && (uploadProgress > 0 || transcodeStage !== 'idle');
+                                        const transcodeOverlayClass = isTranscodeDone
+                                            ? 'bg-emerald-200/24'
+                                            : isTranscodeFailed
+                                              ? 'bg-red-200/24'
+                                              : 'bg-transparent';
+                                        const transcodeTextClass = isTranscodeDone
+                                            ? 'text-emerald-700'
+                                            : isTranscodeFailed
+                                              ? 'text-red-700'
+                                              : 'text-orange-700';
+                                        const transcodeTrackClass = isTranscodeDone
+                                            ? 'bg-emerald-100'
+                                            : isTranscodeFailed
+                                              ? 'bg-red-100'
+                                              : 'bg-orange-100';
+                                        const transcodeFillClass = isTranscodeDone
+                                            ? 'bg-emerald-500'
+                                            : isTranscodeFailed
+                                              ? 'bg-red-500'
+                                              : 'bg-orange-500';
 
                                         return (
                                             <div
@@ -645,7 +816,10 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                                             style={{ width: `${uploadProgress}%` }}
                                                         />
                                                         <div
-                                                            className="pointer-events-none absolute inset-y-0 left-0 bg-emerald-200/40 transition-[width] duration-300"
+                                                            className={[
+                                                                'pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-300',
+                                                                transcodeOverlayClass,
+                                                            ].join(' ')}
                                                             style={{ width: `${transcodeProgress}%` }}
                                                         />
                                                     </>
@@ -656,21 +830,21 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                                         <div className="text-sm font-semibold">
                                                             {formatEpisodeLabel(episode)}
                                                             {isActive && transcodeStage === 'probing' && (
-                                                                <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700">
+                                                                <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-700">
                                                                     Probing...
                                                                 </span>
                                                             )}
-                                                            {isActive && transcodeStage === 'transcoding' && (
-                                                                <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
+                                                            {isTranscodeRunning && (
+                                                                <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-700">
                                                                     {transcodeProgress}%
                                                                 </span>
                                                             )}
-                                                            {isActive && transcodeStage === 'failed' && (
+                                                            {isTranscodeFailed && (
                                                                 <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700">
                                                                     Failed
                                                                 </span>
                                                             )}
-                                                            {isActive && transcodeStage === 'done' && (
+                                                            {isTranscodeDone && (
                                                                 <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
                                                                     Done
                                                                 </span>
@@ -683,7 +857,6 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                                                 size="sm"
                                                                 onClick={() => {
                                                                     setSelectedEpisodeId(episode.id);
-                                                                    setSeasonNumber(String(episode.season_number ?? 1));
                                                                     setEpisodeNumber(String(episode.episode_number ?? ''));
                                                                     setEpisodeTitle(episode.title ?? '');
                                                                 }}
@@ -736,16 +909,29 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                                                     style={{ width: `${uploadProgress}%` }}
                                                                 />
                                                             </div>
-                                                            <div className="flex items-center justify-between text-[11px] text-emerald-700">
+                                                            <div
+                                                                className={[
+                                                                    'flex items-center justify-between text-[11px]',
+                                                                    transcodeTextClass,
+                                                                ].join(' ')}
+                                                            >
                                                                 <span>
                                                                     Transcode
                                                                     {transcodeQuality ? ` (${transcodeQuality})` : ''}
                                                                 </span>
                                                                 <span>{transcodeProgress}%</span>
                                                             </div>
-                                                            <div className="h-1.5 rounded bg-emerald-100">
+                                                            <div
+                                                                className={[
+                                                                    'h-1.5 rounded',
+                                                                    transcodeTrackClass,
+                                                                ].join(' ')}
+                                                            >
                                                                 <div
-                                                                    className="h-full rounded bg-emerald-500 transition-[width] duration-300"
+                                                                    className={[
+                                                                        'h-full rounded transition-[width] duration-300',
+                                                                        transcodeFillClass,
+                                                                    ].join(' ')}
                                                                     style={{ width: `${transcodeProgress}%` }}
                                                                 />
                                                             </div>
@@ -765,7 +951,7 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                                                     <div className="truncate">
                                                                         {media.quality ?? 'default'}
                                                                         {media.language ? ` (${media.language})` : ''}
-                                                                        {media.is_primary ? ' [primary]' : ''}
+                                                                        {media.is_primary ? ' [default]' : ''}
                                                                     </div>
                                                                     <Button
                                                                         type="button"
@@ -788,99 +974,6 @@ export function AnimeVideoManagerModal({ open, onOpenChange, anime }: AnimeVideo
                                     })}
                                 </div>
                             )}
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog
-                open={dropDialogOpen}
-                onOpenChange={(nextOpen) => {
-                    setDropDialogOpen(nextOpen);
-                    if (!nextOpen) {
-                        setDroppedVideo(null);
-                    }
-                }}
-            >
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Create Episode From Dropped Video</DialogTitle>
-                        <DialogDescription>
-                            {droppedVideo
-                                ? `File: ${droppedVideo.name}`
-                                : 'Drop a video file to create an episode.'}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <Label>Season</Label>
-                                <Input
-                                    value={dropSeasonNumber}
-                                    onChange={(e) => setDropSeasonNumber(e.target.value)}
-                                    placeholder="1"
-                                />
-                            </div>
-                            <div>
-                                <Label>Episode</Label>
-                                <Input
-                                    value={dropEpisodeNumber}
-                                    onChange={(e) => setDropEpisodeNumber(e.target.value)}
-                                    placeholder="1"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <Label>Title</Label>
-                            <Input
-                                value={dropEpisodeTitle}
-                                onChange={(e) => setDropEpisodeTitle(e.target.value)}
-                                placeholder="Optional title"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <Label>Qualities</Label>
-                                <Input
-                                    value={dropQualities}
-                                    onChange={(e) => setDropQualities(e.target.value)}
-                                    placeholder="1080"
-                                />
-                            </div>
-                            <div>
-                                <Label>Language</Label>
-                                <Input
-                                    value={dropLanguage}
-                                    onChange={(e) => setDropLanguage(e.target.value)}
-                                    placeholder="ru"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    setDropDialogOpen(false);
-                                    setDroppedVideo(null);
-                                }}
-                                disabled={busy}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    void handleDropCreateAndStart();
-                                }}
-                                disabled={busy || !droppedVideo}
-                            >
-                                Create + Start
-                            </Button>
                         </div>
                     </div>
                 </DialogContent>

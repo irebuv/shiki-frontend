@@ -49,7 +49,8 @@ export default function AnimeDetailPage() {
         anime?.rating !== null && anime?.rating !== undefined && anime?.rating !== ''
             ? String(anime.rating)
             : '-';
-    const coverUrl = anime?.featured_image_url ?? imageUrl(anime?.featured_image);
+    const featuredImageUrl = String(anime?.featured_image_url ?? '').trim();
+    const coverUrl = featuredImageUrl !== '' ? featuredImageUrl : imageUrl(anime?.featured_image);
 
     return (
         <QueryState
@@ -59,7 +60,7 @@ export default function AnimeDetailPage() {
             overlay={<LoadingOverlay />}
             className="container mx-auto p-4"
         >
-            <div className="grid grid-cols-7 gap-8 text-black">
+            <div className="grid grid-cols-7 gap-8 text-foreground">
                 <div className="col-span-5 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
                     <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_230px]">
                         <div className="flex flex-col gap-4">

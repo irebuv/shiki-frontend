@@ -36,20 +36,28 @@ export const AnimeDetailInfoGrid = ({
     episodes,
     episodeTime,
     typeLabelMap,
-}: AnimeDetailInfoGridProps) => (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-        <div className='flex flex-col gap-2'>
-            <InfoRow label="Status" value={capitalize(status)} />
-            <InfoRow label="Type" value={type ? (typeLabelMap[type] ?? type) : '-'} />
-            <InfoRow label="Year" value={displayValue(seasonYear)} />
-            <InfoRow label="Season" value={capitalize(season)} />
-            <InfoRow label="Age rating" value={displayValue(ageRating)} />
-            <InfoRow label="Studio" value={displayValue(studioName)} />
-            <InfoRow label="Episodes" value={displayValue(episodes)} />
+}: AnimeDetailInfoGridProps) => {
+    const studioImageUrl = imageUrl(studioImage);
+
+    return (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div className='flex flex-col gap-2'>
+                <InfoRow label="Status" value={capitalize(status)} />
+                <InfoRow label="Type" value={type ? (typeLabelMap[type] ?? type) : '-'} />
+                <InfoRow label="Year" value={displayValue(seasonYear)} />
+                <InfoRow label="Season" value={capitalize(season)} />
+                <InfoRow label="Age rating" value={displayValue(ageRating)} />
+                <InfoRow label="Studio" value={displayValue(studioName)} />
+                <InfoRow label="Episodes" value={displayValue(episodes)} />
+            </div>
+            <div className='justify-self-center w-1/2'>
+                <span className='text-2xl'>Studio:</span>
+                {studioImageUrl ? (
+                    <img className='mt-2' src={studioImageUrl} alt={studioName ?? 'Studio'} />
+                ) : (
+                    <div className='mt-2 text-sm text-muted-foreground'>No studio image</div>
+                )}
+            </div>
         </div>
-        <div className='justify-self-center w-1/2'>
-            <span className='text-2xl'>Studio:</span>
-            <img className='mt-2' src={imageUrl(studioImage)} alt={studioName} />
-        </div>
-    </div>
-);
+    );
+};

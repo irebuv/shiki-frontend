@@ -1,5 +1,5 @@
 type AnimeCoverCardProps = {
-    coverUrl: string;
+    coverUrl?: string;
     title: string;
 };
 
