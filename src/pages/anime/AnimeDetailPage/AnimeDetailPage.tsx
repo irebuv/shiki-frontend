@@ -16,7 +16,6 @@ export default function AnimeDetailPage() {
     const [episodeItems, setEpisodeItems] = useState<EpisodeItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<any>(null);
-
     const load = useCallback(async () => {
         if (!slug) return;
         setLoading(true);
@@ -44,7 +43,10 @@ export default function AnimeDetailPage() {
         ova: 'OVA',
         ona: 'ONA',
     };
+    const episodesCount = episodeItems.length > 0 ? episodeItems.length : null;
+    
 
+console.log(episodeItems.length)
     const ratingLabel =
         anime?.rating !== null && anime?.rating !== undefined && anime?.rating !== ''
             ? String(anime.rating)
@@ -60,7 +62,7 @@ export default function AnimeDetailPage() {
             overlay={<LoadingOverlay />}
             className="container mx-auto p-4"
         >
-            <div className="grid grid-cols-7 gap-8 text-foreground">
+            <div className="grid grid-cols-7 gap-5 text-foreground">
                 <div className="col-span-5 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
                     <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_230px]">
                         <div className="flex flex-col gap-4">
@@ -83,8 +85,8 @@ export default function AnimeDetailPage() {
                                 ageRating={anime?.age_rating}
                                 studioName={anime?.studio?.name ?? null}
                                 studioImage={anime?.studio?.image ?? null}
+                                episodesCount={episodesCount}
                                 episodes={anime?.episodes}
-                                episodeTime={anime?.episode_time}
                                 typeLabelMap={typeLabelMap}
                             />
                         </div>
@@ -94,6 +96,9 @@ export default function AnimeDetailPage() {
                 </div>
                 <div className="col-span-2 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
                     fff
+                </div>
+                <div className="col-span-7 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+                    rel
                 </div>
                 <div className="col-span-7 rounded-2xl bg-background-light/60 p-1 shadow-sm ring-1 ring-black/10">
                     <AnimePlayer episodes={episodeItems} />

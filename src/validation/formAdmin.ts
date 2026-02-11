@@ -14,6 +14,8 @@ const defaultSchemaByType = (field: AdminFormField): ZodTypeAny => {
         case 'textarea':
         case 'select':
             return z.string();
+        case 'select-input':
+            return z.union([z.string(), z.number()]);
         case 'file':
             return defaultFileSchema;
         default:

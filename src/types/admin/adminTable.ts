@@ -32,6 +32,7 @@ export type AdminFormFieldType =
     | 'text'
     | 'textarea'
     | 'select'
+    | 'select-input'
     | 'file'
     | 'filters'
     | 'filter-list'
@@ -53,6 +54,8 @@ export interface AdminFormField {
     validation?: ZodTypeAny | false;
     previewUrl?: (item: Record<string, any>) => string | null;
     options?: AdminFormFieldOption[];
+    manualOptionLabel?: string;
+    manualInputPlaceholder?: string;
     parseAsNumber?: boolean;
     emptyValue?: string;
     sanitize?: (value: unknown) => unknown;
