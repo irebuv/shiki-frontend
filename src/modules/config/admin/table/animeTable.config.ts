@@ -206,7 +206,10 @@ const columns = [
     { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
 ];
 
-const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void }) => [
+const buildActions = (options?: {
+    onVideoClick?: (row: AdminTableRow) => void;
+    onRelationsClick?: (row: AdminTableRow) => void;
+}) => [
     {
         label: 'View',
         icon: 'Eye',
@@ -218,6 +221,13 @@ const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void })
         method: 'button' as const,
         onClick: options?.onVideoClick,
         className: 'ms-2 cursor-pointer rounded-lg bg-amber-600 p-2 text-white hover:opacity-90',
+    },
+    {
+        label: 'Relations',
+        icon: 'Link2',
+        method: 'button' as const,
+        onClick: options?.onRelationsClick,
+        className: 'ms-2 cursor-pointer rounded-lg bg-violet-600 p-2 text-white hover:opacity-90',
     },
     {
         label: 'Edit',
@@ -233,7 +243,10 @@ const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void })
 
 export const buildAnimeTableConfig = (
     studioOptions: AdminFormFieldOption[] = [],
-    options?: { onVideoClick?: (row: AdminTableRow) => void },
+    options?: {
+        onVideoClick?: (row: AdminTableRow) => void;
+        onRelationsClick?: (row: AdminTableRow) => void;
+    },
 ) => ({
     columns,
     actions: buildActions(options),

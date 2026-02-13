@@ -92,9 +92,40 @@ export type EpisodeItem = {
     media?: EpisodeMediaItem[];
 };
 
+export type AnimeRelatedItem = {
+    id?: number | null;
+    sort_order?: number | null;
+    is_current?: boolean;
+    related_anime?: {
+        id: number;
+        name: string;
+        slug: string;
+        type?: string | null;
+        status?: string | null;
+        season_year?: number | null;
+        season?: string | null;
+        featured_image?: string | null;
+        featured_image_url?: string | null;
+    } | null;
+};
+
+export type AnimeSimilarItem = {
+    id: number;
+    name: string;
+    slug: string;
+    type?: string | null;
+    status?: string | null;
+    season_year?: number | null;
+    season?: string | null;
+    featured_image?: string | null;
+    score?: number | null;
+}
+
 export interface AnimeDetailResponse {
     anime: Anime;
     episode_items?: EpisodeItem[];
+    similar_items?: AnimeSimilarItem[];
+    related_items?: AnimeRelatedItem[];
 }
 
 export type AnimeFilterPreset = {
