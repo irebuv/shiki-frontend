@@ -113,6 +113,36 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
             ),
         },
         {
+            id: 'episodes',
+            name: 'episodes',
+            label: 'Episodes',
+            type: 'select-input',
+            defaultValue: '',
+            parseAsNumber: true,
+            options: [
+                { value: 11, label: '11' },
+                { value: 12, label: '12' },
+                { value: 13, label: '13' },
+                { value: 24, label: '24' },
+                { value: 25, label: '25' },
+            ],
+            manualOptionLabel: 'Enter manually',
+            manualInputPlaceholder: 'Enter episodes count',
+            sanitize: (value) => {
+                if (value === '' || value === null || value === undefined) return undefined;
+                const next = typeof value === 'number' ? value : Number(value);
+                return Number.isFinite(next) && next > 0 ? next : undefined;
+            },
+            validation: z.preprocess(
+                (value) => {
+                    if (value === '' || value === null || value === undefined) return undefined;
+                    const next = typeof value === 'number' ? value : Number(value);
+                    return Number.isNaN(next) ? value : next;
+                },
+                z.number().int().positive().optional(),
+            ),
+        },
+        {
             id: 'season',
             name: 'season_year',
             label: 'Season year',
@@ -176,7 +206,10 @@ const columns = [
     { label: 'Actions', key: 'actions', isAction: true, className: 'border p-4' },
 ];
 
-const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void }) => [
+const buildActions = (options?: {
+    onVideoClick?: (row: AdminTableRow) => void;
+    onRelationsClick?: (row: AdminTableRow) => void;
+}) => [
     {
         label: 'View',
         icon: 'Eye',
@@ -188,6 +221,13 @@ const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void })
         method: 'button' as const,
         onClick: options?.onVideoClick,
         className: 'ms-2 cursor-pointer rounded-lg bg-amber-600 p-2 text-white hover:opacity-90',
+    },
+    {
+        label: 'Relations',
+        icon: 'Link2',
+        method: 'button' as const,
+        onClick: options?.onRelationsClick,
+        className: 'ms-2 cursor-pointer rounded-lg bg-violet-600 p-2 text-white hover:opacity-90',
     },
     {
         label: 'Edit',
@@ -203,7 +243,10 @@ const buildActions = (options?: { onVideoClick?: (row: AdminTableRow) => void })
 
 export const buildAnimeTableConfig = (
     studioOptions: AdminFormFieldOption[] = [],
-    options?: { onVideoClick?: (row: AdminTableRow) => void },
+    options?: {
+        onVideoClick?: (row: AdminTableRow) => void;
+        onRelationsClick?: (row: AdminTableRow) => void;
+    },
 ) => ({
     columns,
     actions: buildActions(options),

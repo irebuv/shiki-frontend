@@ -8,6 +8,7 @@ import { QueryState } from '@/components/custom/QueryState';
 import { useMemo, useState } from 'react';
 import type { AdminTableRow } from '@/types/admin/adminTable';
 import { AnimeVideoManagerModal } from './components/AnimeVideoManagerModal';
+import { AnimeRelationsManagerModal } from './components/AnimeRelationsManagerModal';
 
 type VideoAnimeRef = {
     id: number;
@@ -16,6 +17,7 @@ type VideoAnimeRef = {
 
 export default function AnimeAdminPage() {
     const [videoModalOpen, setVideoModalOpen] = useState(false);
+    const [relationsModalOpen, setRelationsModalOpen] = useState(false);
     const [selectedAnime, setSelectedAnime] = useState<VideoAnimeRef | null>(null);
 
     const { data, loading, error, setFilters, refetch } = useQueryData<AnimeResponse, {}>({
@@ -45,6 +47,13 @@ export default function AnimeAdminPage() {
                         name: typeof row.name === 'string' ? row.name : undefined,
                     });
                     setVideoModalOpen(true);
+                },
+                onRelationsClick: (row: AdminTableRow) => {
+                    setSelectedAnime({
+                        id: row.id,
+                        name: typeof row.name === 'string' ? row.name : undefined,
+                    });
+                    setRelationsModalOpen(true);
                 },
             }),
         [studioOptions],
@@ -85,6 +94,14 @@ export default function AnimeAdminPage() {
                 open={videoModalOpen}
                 onOpenChange={(open) => {
                     setVideoModalOpen(open);
+                    if (!open) setSelectedAnime(null);
+                }}
+                anime={selectedAnime}
+            />
+            <AnimeRelationsManagerModal
+                open={relationsModalOpen}
+                onOpenChange={(open) => {
+                    setRelationsModalOpen(open);
                     if (!open) setSelectedAnime(null);
                 }}
                 anime={selectedAnime}
