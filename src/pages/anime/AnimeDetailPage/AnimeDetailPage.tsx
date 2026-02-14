@@ -67,7 +67,7 @@ console.log(similarItems)
             className="container mx-auto p-4"
         >
             <div className="grid grid-cols-7 gap-5 text-foreground">
-                <div className="col-span-5 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+                <div className="col-span-7 md:col-span-5 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
                     <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_230px]">
                         <div className="flex flex-col gap-4">
                             <AnimeDetailHeader
@@ -98,7 +98,7 @@ console.log(similarItems)
                         <AnimeCoverCard coverUrl={coverUrl} title={anime?.name ?? 'Anime cover'} />
                     </div>
                 </div>
-                <div className="col-span-2 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+                <div className="col-span-7 md:col-span-2 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
                     fff
                 </div>
                 {relatedItems.length !== 0 && (
@@ -109,7 +109,7 @@ console.log(similarItems)
                 <div className="col-span-7 rounded-2xl bg-background-light/60 p-1 shadow-sm ring-1 ring-black/10">
                     <AnimePlayer episodes={episodeItems} />
                 </div>
-                <div className="col-span-7 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+                <div className="col-span-7 rounded-2xl bg-background-light/60 p-1 shadow-sm ring-1 ring-black/10">
                     {similarItems.length !== 0 && (
                         <AnimeSimilar similarItems={similarItems} typeLabelMap={typeLabelMap} />
                     )}
