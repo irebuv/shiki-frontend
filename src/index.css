@@ -76,6 +76,23 @@
     --color-sidebar-ring: var(--sidebar-ring);
     /* Tailwind base (font-sans) pulls from this variable */
     --font-sans: 'DeliusRegular', 'Delius', cursive, system-ui, sans-serif;
+
+    /*------season colors----*/
+    --color-season-winter-bg: var(--season-winter-bg);
+    --color-season-winter-fg: var(--season-winter-fg);
+    --color-season-winter-ring: var(--season-winter-ring);
+
+    --color-season-spring-bg: var(--season-spring-bg);
+    --color-season-spring-fg: var(--season-spring-fg);
+    --color-season-spring-ring: var(--season-spring-ring);
+
+    --color-season-summer-bg: var(--season-summer-bg);
+    --color-season-summer-fg: var(--season-summer-fg);
+    --color-season-summer-ring: var(--season-summer-ring);
+
+    --color-season-fall-bg: var(--season-fall-bg);
+    --color-season-fall-fg: var(--season-fall-fg);
+    --color-season-fall-ring: var(--season-fall-ring);
 }
 
 :root {
@@ -157,6 +174,23 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
     --font-primary: 'DeliusRegular', 'Delius', cursive, system-ui, sans-serif;
+
+    /*------season colors----*/
+    --season-winter-bg: oklch(95.5% 0.032 238);
+    --season-winter-fg: oklch(52.5% 0.128 238);
+    --season-winter-ring: oklch(82% 0.07 238);
+
+    --season-spring-bg: oklch(96% 0.03 152);
+    --season-spring-fg: oklch(51.5% 0.12 152);
+    --season-spring-ring: oklch(82.5% 0.065 152);
+
+    --season-summer-bg: oklch(96.5% 0.04 78);
+    --season-summer-fg: oklch(57.5% 0.145 78);
+    --season-summer-ring: oklch(84% 0.08 78);
+
+    --season-fall-bg: oklch(95.5% 0.035 45);
+    --season-fall-fg: oklch(52.5% 0.12 45);
+    --season-fall-ring: oklch(82% 0.075 45);
 }
 
 .dark {
@@ -229,6 +263,23 @@
     --sidebar-accent-foreground: oklch(96% 0.008 255);
     --sidebar-border: oklch(90% 0.01 252 / 0.14);
     --sidebar-ring: oklch(66% 0.16 252);
+
+    /*------season colors----*/
+    --season-winter-bg: oklch(32% 0.06 238);
+    --season-winter-fg: oklch(83% 0.095 238);
+    --season-winter-ring: oklch(56% 0.1 238);
+
+    --season-spring-bg: oklch(33% 0.055 152);
+    --season-spring-fg: oklch(84% 0.092 152);
+    --season-spring-ring: oklch(57% 0.095 152);
+
+    --season-summer-bg: oklch(35% 0.06 78);
+    --season-summer-fg: oklch(86% 0.11 78);
+    --season-summer-ring: oklch(60% 0.105 78);
+
+    --season-fall-bg: oklch(34% 0.055 45);
+    --season-fall-fg: oklch(85% 0.102 45);
+    --season-fall-ring: oklch(58% 0.095 45);
 }
 
 @layer base {
