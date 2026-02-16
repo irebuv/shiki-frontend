@@ -2,7 +2,13 @@ import api from '@/api/axios';
 import { QueryState } from '@/components/custom/QueryState';
 import { LoadingOverlay } from '@/components/shared/LoadingOverlay';
 import { imageUrl } from '@/lib/imageUrl';
-import type { Anime, AnimeDetailResponse, AnimeRelatedItem, AnimeSimilarItem, EpisodeItem } from '@/types/anime';
+import type {
+    Anime,
+    AnimeDetailResponse,
+    AnimeRelatedItem,
+    AnimeSimilarItem,
+    EpisodeItem,
+} from '@/types/anime';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AnimeDetailHeader } from './components/AnimeDetailHeader';
@@ -57,7 +63,7 @@ export default function AnimeDetailPage() {
             : '-';
     const featuredImageUrl = String(anime?.featured_image_url ?? '').trim();
     const coverUrl = featuredImageUrl !== '' ? featuredImageUrl : imageUrl(anime?.featured_image);
-console.log(similarItems)
+    console.log(similarItems);
     return (
         <QueryState
             loading={loading}
@@ -66,8 +72,12 @@ console.log(similarItems)
             overlay={<LoadingOverlay />}
             className="container mx-auto p-4"
         >
-            <div className="grid grid-cols-7 gap-5 text-foreground">
-                <div className="col-span-7 md:col-span-5 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+            <div
+                className="grid grid-cols-7 gap-5 text-foreground [&>.detail-block]:ring-1
+                [&>.detail-block]:rounded-2xl [&>.detail-block]:bg-background-light/90
+              [&>.detail-block]:ring-black/10 [&>.detail-block]:shadow-sm"
+            >
+                <div className="col-span-7 md:col-span-5 detail-block p-6">
                     <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_230px]">
                         <div className="flex flex-col gap-4">
                             <AnimeDetailHeader
@@ -98,22 +108,20 @@ console.log(similarItems)
                         <AnimeCoverCard coverUrl={coverUrl} title={anime?.name ?? 'Anime cover'} />
                     </div>
                 </div>
-                <div className="col-span-7 md:col-span-2 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
-                    fff
-                </div>
+                <div className="col-span-7 md:col-span-2 p-6 detail-block">fff</div>
                 {relatedItems.length !== 0 && (
-                    <div className="col-span-7 rounded-2xl bg-background-light/60 p-6 shadow-sm ring-1 ring-black/10">
+                    <div className="col-span-7 detail-block p-6">
                         <AnimeRelated relatedItems={relatedItems} typeLabelMap={typeLabelMap} />
                     </div>
                 )}
-                <div className="col-span-7 rounded-2xl bg-background-light/60 p-1 shadow-sm ring-1 ring-black/10">
+                <div className="col-span-7 detail-block p-1">
                     <AnimePlayer episodes={episodeItems} />
                 </div>
-                <div className="col-span-7 rounded-2xl bg-background-light/60 p-1 shadow-sm ring-1 ring-black/10">
-                    {similarItems.length !== 0 && (
+                {similarItems.length !== 0 && (
+                    <div className="col-span-7 detail-block p-1">
                         <AnimeSimilar similarItems={similarItems} typeLabelMap={typeLabelMap} />
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </QueryState>
     );

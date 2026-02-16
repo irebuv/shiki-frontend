@@ -15,7 +15,7 @@ export default function Filter({ title, children, storageKey, defaultOpen = fals
     return (
         <div className="p-3">
             <button
-                className="border-r-8 border-sidebar-ring bg-input px-4 py-2 text-xl cursor-pointer w-full"
+                className="border-r-8 border-chart-1/90 bg-chart-2 px-4 py-2 text-xl cursor-pointer w-full"
                 onClick={() => setOpen((v) => !v)}
             >
                 <div className="flex justify-between items-center">
@@ -34,7 +34,7 @@ export default function Filter({ title, children, storageKey, defaultOpen = fals
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 1 }}
                         transition={{ duration: 0.2 }}
-                        className="overflow-hidden pt-3"
+                        className="overflow-hidden pt-3 bg-card/70"
                     >
                         {children}
                     </motion.div>

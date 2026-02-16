@@ -24,7 +24,7 @@ export function getSeasonBadge(season?: string | null, seasonYear?: number | nul
     if (!seasonKey && !seasonYear) return null;
 
     const label =
-        `${seasonKey ? capitalize(seasonKey, '') : ''}${seasonYear ? `${seasonYear}` : ''}`.trim();
+        `${seasonKey ? capitalize(seasonKey, '') : ''} ${seasonYear ? `${seasonYear}` : ''}`.trim();
 
     return {
         label,
