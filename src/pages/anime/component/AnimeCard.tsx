@@ -59,7 +59,7 @@ export function AnimeCard({ anime }: Props) {
     return (
         <>
             {/* CARD */}
-            <Link to={`/anime/${anime.slug}`} ref={refs.setReference} {...getReferenceProps()} className="cursor-pointer">
+            <Link to={`/anime/${anime.slug}`} ref={refs.setReference} {...getReferenceProps()} className="cursor-pointer p-1 bg-card/90 rounded-lg">
                 {coverUrl ? (
                     <img
                         className="aspect-2/3 w-full rounded-lg object-cover"

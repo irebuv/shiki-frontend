@@ -22,14 +22,16 @@ export default function Header() {
 
     return (
         <motion.header
-            initial={{ boxShadow: '0px 0px 0px rgba(0,0,0)' }}
-            transition={{ duration: 0.3 }}
+            initial={{ boxShadow: '0px 0px 0px rgba(0,0,0)', backgroundColor: 'var(--header-bg-50)' }}
+            transition={{ duration: 1.35, ease: 'easeOut' }}
             animate={{
                 boxShadow: scrolled
                     ? '0px 4px 6px rgba(122,122,122,0.3)'
                     : '0px 0px 0px rgba(0,0,0,0)',
+
+                backgroundColor: scrolled ? 'var(--header-bg-100)' : 'var(--header-bg-50)',
             }}
-            className="border-b border-chart-3/10 sticky top-0 left-0 z-40 w-full bg-header-bg p-2 text-foreground"
+            className="border-b border-chart-3/10 sticky top-0 left-0 z-40 w-full p-2 text-foreground"
         >
             <div className="grid grid-cols-[auto_auto_1fr_auto_auto] gap-4 items-center">
                 <Link to="/">
