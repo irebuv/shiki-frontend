@@ -6,6 +6,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { AppThemeProvider } from '@/lib/theme/AppThemeProvider';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { initCrackOverlayPhase } from './lib/theme/crackOverlayPhase';
+
+initCrackOverlayPhase();
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>

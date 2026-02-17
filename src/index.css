@@ -96,12 +96,6 @@
     --color-season-fall-ring: var(--season-fall-ring);
 }
 
-@property --crack-overlay-h {
-    syntax: '<number>';
-    inherits: true;
-    initial-value: 237.33;
-}
-
 :root {
     --radius: 0.625rem;
     /* Radix Themes uses this for its default font stack */
@@ -340,7 +334,7 @@ html.theme-wave-in::before {
     transition:
         clip-path 700ms cubic-bezier(0.55, 0, 1, 0.45),
         opacity 700ms cubic-bezier(0.55, 0, 1, 0.45);
-    clip-path: circle(120% at var(--switch-x, 50%) var(--switch-y, 50%));
+    clip-path: circle(150% at var(--switch-x, 50%) var(--switch-y, 50%));
 }
 
 html.theme-wave-color::before {

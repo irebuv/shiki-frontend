@@ -57,7 +57,9 @@
         var(--crack-overlay-color);
     mix-blend-mode: normal;
     background-size: 110%;
-    animation: crack-rainbow 400s linear infinite;
+    animation: crack-rainbow 1200s linear infinite;
+    background-size: cover;
+  animation-delay: var(--crack-overlay-delay, 0s);
 }
 @media (prefers-reduced-motion: reduce) {
   .crack-overlay {

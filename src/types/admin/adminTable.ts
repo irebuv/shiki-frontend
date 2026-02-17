@@ -98,6 +98,7 @@ export interface CustomAdminTableProps {
     createLabel?: string;
     getCreatedId?: (created: any) => number | undefined;
     filters?: Record<string, { id: number; title: string; visible?: boolean }[]> | null;
+    toolbar?: ReactNode;
 }
 
 export interface AdminTableActionButtonsProps {
