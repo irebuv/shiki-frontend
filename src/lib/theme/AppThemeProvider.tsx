@@ -125,6 +125,8 @@ export function AppThemeProvider({
     return () => media.removeEventListener("change", listener);
   }, [theme]);
 
+
+
   const value = useMemo<ThemeContextValue>(() => {
     return {
       theme,

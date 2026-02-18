@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import type { AdminTableRow } from '@/types/admin/adminTable';
 import { AnimeVideoManagerModal } from './components/AnimeVideoManagerModal';
 import { AnimeRelationsManagerModal } from './components/AnimeRelationsManagerModal';
+import { AnimeSimilarRebuildPanel } from '@/components/admin/CustomAdminTable/AnimeSimilarRebuildPanel';
 
 type VideoAnimeRef = {
     id: number;
@@ -79,6 +80,7 @@ export default function AnimeAdminPage() {
                     refetch={refetch}
                     createUrl="/admin/anime"
                     filters={data?.filtersList ?? null}
+                    toolbar={<AnimeSimilarRebuildPanel onDone={refetch} />}
                 />
                 {data?.pagination && (
                     <div className="ml-auto">

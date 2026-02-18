@@ -110,6 +110,7 @@ export const CustomAdminTable = ({
     imageUploadUrl,
     createLabel,
     getCreatedId,
+    toolbar,
     filters,
 }: CustomAdminTableProps) => {
     /* ↓↓↓↓↓↓↓↓↓↓↓↓↓ Form block ↓↓↓↓↓↓↓↓↓↓↓↓↓ */
@@ -307,9 +308,12 @@ export const CustomAdminTable = ({
     };
     return (
         <>
-            <Button type="button" onClick={openCreate} className="w-fit">
-                {'Add new ' + modalTitle}
-            </Button>
+            <div className='flex flex-wrap items-center gap-3 justify-between'>
+               {toolbar ? <div className='flex items-center gap-2'>{toolbar}</div> : null}
+               <Button type='button' onClick={openCreate} className='w-fit'>
+                  {createLabel ?? 'Add new ' + modalTitle}
+               </Button>
+            </div>
             <AdminTable
                 actions={actions}
                 columns={columns}
