@@ -11,6 +11,7 @@ export interface AdminTableColumn {
     className?: string;
     type?: string;
     render?: (row: AdminTableRow) => ReactNode;
+    imageHref?: (row: AdminTableRow) => string | undefined; // optional image link
 }
 
 export interface AdminTableRow {

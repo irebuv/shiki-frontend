@@ -1,10 +1,11 @@
-import { DescriptionLinesSelect } from "@/components/custom/DescriptionLinesSelect";
-import { ExpandableText } from "@/components/custom/ExpandableText";
-import { useDescriptionLines } from "@/hooks/useDescriptionLines";
-import { DescriptionLines } from "@/lib/descriptionLines";
-import { imageUrl } from "@/lib/imageUrl";
-import { AdminTableActionButtons } from "./AdminTableActionButtons";
-import type { AdminTableProps } from "@/types/admin/adminTable";
+import { DescriptionLinesSelect } from '@/components/custom/DescriptionLinesSelect';
+import { ExpandableText } from '@/components/custom/ExpandableText';
+import { useDescriptionLines } from '@/hooks/useDescriptionLines';
+import { DescriptionLines } from '@/lib/descriptionLines';
+import { imageUrl } from '@/lib/imageUrl';
+import { AdminTableActionButtons } from './AdminTableActionButtons';
+import type { AdminTableProps } from '@/types/admin/adminTable';
+import { Link } from 'react-router-dom';
 
 export default function AdminTable({
     actions,
@@ -61,18 +62,39 @@ export default function AdminTable({
                                             col.render(row)
                                         ) : col.isImage ? (
                                             <div className="flex justify-center">
-                                                {row[col.key] ? (
-                                                    <img
-                                                        width={100}
-                                                        className="block"
-                                                        src={imageUrl(row[col.key])}
-                                                        alt="Image"
-                                                    />
-                                                ) : (
-                                                    <div className="text-sm opacity-60">
-                                                        No image
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const src = imageUrl(row[col.key]);
+                                                    const href = col.imageHref?.(row);
+
+                                                    if (!src) {
+                                                        return (
+                                                            <div className="text-sm opacity-60">
+                                                                No image
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    const imageNode = (
+                                                        <img
+                                                            src={src}
+                                                            alt={row[col.label]}
+                                                            className="block transition-opacity group-hover:opacity-90"
+                                                            width={100}
+                                                        />
+                                                    );
+
+                                                    return href ? (
+                                                        <Link
+                                                            to={href}
+                                                            className="group cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                            title="Open anime page"
+                                                        >
+                                                            {imageNode}
+                                                        </Link>
+                                                    ) : (
+                                                        imageNode
+                                                    );
+                                                })()}
                                             </div>
                                         ) : col.isAction ? (
                                             <AdminTableActionButtons
@@ -104,5 +126,5 @@ export default function AdminTable({
                 </tbody>
             </table>
         </div>
-    )
+    );
 }
