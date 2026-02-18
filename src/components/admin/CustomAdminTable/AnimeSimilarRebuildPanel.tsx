@@ -17,7 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type Scope = 'all' | 'week' | 'month' | 'two_months' | 'three_months';
 
@@ -58,6 +58,18 @@ type RebuildStatusResponse = {
         pending: number;
         failed: number;
         next_available_at: string | null;
+        limit?: number;
+    };
+    errors?: unknown;
+};
+
+type SimilarSettingsResponse = {
+    message: string;
+    data?: {
+        limit: number;
+        min: number;
+        max: number;
+        step: number;
     };
     errors?: unknown;
 };
@@ -71,13 +83,26 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
     const [scope, setScope] = useState<Scope>('three_months');
     const [submitting, setSubmitting] = useState(false);
     const [clearingQueue, setClearingQueue] = useState(false);
+    const [settingsLoading, setSettingsLoading] = useState(true);
     const [statusLoading, setStatusLoading] = useState(true);
     const [rebuildStatus, setRebuildStatus] = useState<RebuildStatusResponse['data'] | null>(null);
     const [scheduleOffPeak, setScheduleOffPeak] = useState(false);
+    const [limitSaving, setLimitSaving] = useState(false);
+
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [similarLimit, setSimilarLimit] = useState(12);
+    const [limitDraft, setLimitDraft] = useState('12');
+
+    const [limitMin, setLimitMin] = useState(4);
+    const [limitMax, setLimitMax] = useState(24);
+    const [limitStep, setLimitStep] = useState(4);
+
+    const settingsRef = useRef<HTMLDivElement | null>(null);
 
     const isRunning = (rebuildStatus?.ready ?? 0) > 0;
     const pending = rebuildStatus?.pending ?? 0;
     const isBusy = pending > 0;
+    const hasScheduled = (rebuildStatus?.scheduled ?? 0) > 0;
 
     const nextAvailableMs = rebuildStatus?.next_available_at
         ? Date.parse(rebuildStatus.next_available_at)
@@ -88,8 +113,7 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
         : null;
 
     // Delayed queue may have short gaps with ready=0; treat near-future jobs as active.
-    const isActiveQueue =
-        isRunning || (isBusy && (secondsToNext === null || secondsToNext <= 120));
+    const isActiveQueue = isRunning || (isBusy && (secondsToNext === null || secondsToNext <= 120));
 
     const shouldFastPoll =
         open ||
@@ -97,30 +121,111 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
         isActiveQueue ||
         (isBusy && (secondsToNext === null || secondsToNext <= 600));
 
-    const hasScheduled = (rebuildStatus?.scheduled ?? 0) > 0;
+    const shouldPoll = open || submitting || isBusy || hasScheduled;
+    const lockRebuildActions =
+        statusLoading ||
+        settingsLoading ||
+        submitting ||
+        clearingQueue ||
+        isActiveQueue ||
+        hasScheduled;
+    const lockSettingsActions =
+        settingsLoading || limitSaving || submitting || clearingQueue || isActiveQueue;
+
     const loadStatus = useCallback(async () => {
         try {
             const { data } = await api.get<RebuildStatusResponse>('/admin/anime/similars/status');
             setRebuildStatus(data?.data ?? null);
-        } catch {
-            //
+
+            if (typeof data?.data?.limit === 'number') {
+                setSimilarLimit(data.data.limit);
+                setLimitDraft(String(data.data.limit));
+            }
         } finally {
             setStatusLoading(false);
         }
     }, []);
 
-    const shouldPoll = open || submitting || isBusy || hasScheduled;
-    const lockActions = statusLoading || submitting || clearingQueue || isActiveQueue;
+    const loadSettings = useCallback(async () => {
+        try {
+            const { data } = await api.get<SimilarSettingsResponse>(
+                '/admin/anime/similars/settings',
+            );
+            if (data?.data) {
+                setSimilarLimit(data.data.limit);
+                setLimitDraft(String(data.data.limit));
+                setLimitMin(data.data.min);
+                setLimitMax(data.data.max);
+                setLimitStep(data.data.step);
+            }
+        } finally {
+            setSettingsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         void loadStatus();
+        void loadSettings();
+    }, [loadStatus, loadSettings]);
 
+    useEffect(() => {
         if (!shouldPoll) return;
 
         const intervalMs = shouldFastPoll ? 5000 : 60000;
         const id = window.setInterval(() => void loadStatus(), intervalMs);
         return () => window.clearInterval(id);
     }, [shouldPoll, shouldFastPoll, loadStatus]);
+
+    useEffect(() => {
+        if (!settingsOpen) return;
+
+        const onPointerDown = (event: MouseEvent) => {
+            if (!settingsRef.current) return;
+            if (settingsRef.current.contains(event.target as Node)) return;
+            setSettingsOpen(false);
+        };
+
+        document.addEventListener('mousedown', onPointerDown);
+        return () => document.removeEventListener('mousedown', onPointerDown);
+    }, [settingsOpen]);
+
+    const statusText = useMemo(() => {
+        if (statusLoading) return 'Checking rebuild queue ...';
+        if (isRunning) {
+            return `Running: ${rebuildStatus?.ready ?? 0}`;
+        }
+
+        if (isActiveQueue) {
+            return `Queue active: ${rebuildStatus?.pending ?? 0}`;
+        }
+
+        if (hasScheduled) {
+            return `Scheduled: ${rebuildStatus?.scheduled ?? 0}`;
+        }
+
+        return 'Rebuild queue is idle';
+    }, [
+        statusLoading,
+        isRunning,
+        isActiveQueue,
+        hasScheduled,
+        rebuildStatus?.ready,
+        rebuildStatus?.pending,
+        rebuildStatus?.scheduled,
+    ]);
+
+    const nextText = useMemo(() => {
+        if (!rebuildStatus?.next_available_at) return '';
+        return `next: ${new Date(rebuildStatus.next_available_at).toLocaleTimeString()}`;
+    }, [rebuildStatus?.next_available_at]);
+
+    const limitOptions = useMemo(() => {
+        const options: number[] = [];
+        for (let v = limitMin; v <= limitMax; v += limitStep) {
+            options.push(v);
+        }
+        return options;
+    }, [limitMin, limitMax, limitStep]);
 
     const submit = async () => {
         setSubmitting(true);
@@ -129,7 +234,6 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
         try {
             const { data } = await api.post<RebuildResponse>('/admin/anime/similars/rebuild', {
                 scope,
-                limit: 12,
                 chunk: 200,
                 defer_to_night: scheduleOffPeak,
             });
@@ -162,15 +266,53 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
         }
     };
 
+    const saveLimit = async () => {
+        const parsed = Number(limitDraft);
+
+        if (!Number.isInteger(parsed)) {
+            toast.error('Limit must be an integer');
+            return;
+        }
+
+        if (parsed < limitMin || parsed > limitMax) {
+            toast.error(`Limit must be between ${limitMin} and ${limitMax}`);
+            return;
+        }
+
+        if (parsed % limitStep !== 0) {
+            toast.error(`Limit must be a multiple of ${limitStep}`);
+            return;
+        }
+
+        setLimitSaving(true);
+
+        try {
+            const { data } = await api.put<SimilarSettingsResponse>(
+                '/admin/anime/similars/settings',
+                { limit: parsed },
+            );
+
+            const nextLimit = data?.data?.limit ?? parsed;
+            setSimilarLimit(nextLimit);
+            setLimitDraft(String(nextLimit));
+            toast.success(data?.message ?? 'Similar limit updated');
+            setSettingsOpen(false);
+            await loadStatus();
+        } finally {
+            setLimitSaving(false);
+        }
+    };
+
     return (
         <>
-            <div className="flex items-center gap-2 py-1.5 px-2 border rounded-xl">
-               similars:
+            <div className="relative flex flex-wrap items-center gap-2 border rounded-xl py-1.5 px-2">
+                <span className="text-sm font-semibold text-foreground">similars:</span>
+
                 <Button
                     type="button"
                     variant="outline"
                     onClick={() => setOpen(true)}
-                    disabled={lockActions}
+                    disabled={lockRebuildActions}
                 >
                     {statusLoading
                         ? 'Checking status...'
@@ -178,61 +320,105 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
                           ? 'Rebuild in progress...'
                           : isBusy
                             ? 'Rebuild queued...'
-                            : submitting
-                              ? 'Processing...'
-                              : scheduleOffPeak
-                                ? 'Schedule rebuild'
-                                : 'Rebuild now'}
+                            : scheduleOffPeak
+                              ? 'Schedule rebuild'
+                              : 'Rebuild now'}
                 </Button>
-                <div className="text-xs text-muted-foreground">
-                    {isRunning ? (
-                        <span>
-                            Rebuild in progress: {rebuildStatus?.ready ?? 0}
-                            {rebuildStatus?.next_available_at
-                                ? `, next: ${new Date(rebuildStatus.next_available_at).toLocaleTimeString()}`
-                                : ''}
-                        </span>
-                    ) : isActiveQueue ? (
-                        <span>
-                            Queue active: {rebuildStatus?.pending ?? 0}
-                            {rebuildStatus?.next_available_at
-                                ? `, next: ${new Date(rebuildStatus.next_available_at).toLocaleTimeString()}`
-                                : ''}
-                        </span>
-                    ) : hasScheduled ? (
-                        <span>
-                            Scheduled: {rebuildStatus?.scheduled ?? 0}
-                            {rebuildStatus?.next_available_at
-                                ? `, next: ${new Date(rebuildStatus.next_available_at).toLocaleTimeString()}`
-                                : ''}
-                        </span>
-                    ) : (
-                        <span>
-                            {statusLoading ? 'Checking rebuild queue...' : 'Rebuild queue is idle'}
-                        </span>
-                    )}
-                    {rebuildStatus?.failed ? (
-                        <span className="ml-2 text-danger">Failed: {rebuildStatus.failed}</span>
-                    ) : null}
-                    {isBusy || (rebuildStatus?.failed ?? 0) > 0 ? (
-                        <Button
-                            type="button"
-                            variant="clear"
-                            onClick={clearQueue}
-                            disabled={statusLoading || submitting || clearingQueue}
-                            className="ml-2"
-                        >
-                            {clearingQueue ? 'Clearing...' : 'Clear queue'}
-                        </Button>
+
+                <div ref={settingsRef} className="relative">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setSettingsOpen((v) => !v)}
+                        disabled={lockSettingsActions}
+                    >
+                        Limit: {similarLimit}
+                    </Button>
+
+                    {settingsOpen ? (
+                        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-72 rounded-xl border border-border bg-background p-3 shadow-lg">
+                            <p className="text-xs text-muted-foreground">
+                                Global similar limit for all rebuilds and anime detail output.
+                            </p>
+                            <div className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-xs text-foreground">
+                                Be careful to increase this value too high. It can load database and
+                                made overwhelmed.
+                            </div>
+                            <div className="mt-2 space-y-2">
+                                <Label htmlFor="similar-limit-input">Similar limit</Label>
+
+                                <Select
+                                    value={limitDraft}
+                                    onValueChange={setLimitDraft}
+                                    disabled={limitSaving}
+                                >
+                                    <SelectTrigger id="similar-limit-input">
+                                        <SelectValue placeholder="Select limit" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {limitOptions.map((value) => (
+                                            <SelectItem key={value} value={String(value)}>
+                                                {value}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <p className="text-xs text-muted-foreground">
+                                    Allowed: {limitMin}..{limitMax}, step: {limitStep}
+                                </p>
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setLimitDraft(String(similarLimit));
+                                        setSettingsOpen(false);
+                                    }}
+                                    disabled={limitSaving}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={saveLimit}
+                                    disabled={limitSaving}
+                                >
+                                    {limitSaving ? 'Saving...' : 'Save'}
+                                </Button>
+                            </div>
+                        </div>
                     ) : null}
                 </div>
+
+                <span className="text-xs text-muted-foreground">
+                    {statusText}
+                    {nextText ? `, ${nextText}` : ''}
+                    {rebuildStatus?.failed ? `, failed: ${rebuildStatus.failed}` : ''}
+                </span>
+
+                {isBusy || (rebuildStatus?.failed ?? 0) > 0 ? (
+                    <Button
+                        type="button"
+                        variant="clear"
+                        onClick={clearQueue}
+                        disabled={statusLoading || clearingQueue || submitting}
+                    >
+                        {clearingQueue ? 'Clearing...' : 'Clear queue'}
+                    </Button>
+                ) : null}
             </div>
+
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>Rebuild Similar Anime</DialogTitle>
                         <DialogDescription>
-                            Queue recalculation now or schedule it for off-peak hours at next 03:30.
+                            Uses global limit: {similarLimit}. Queue now or schedule for next 03:30.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -257,8 +443,7 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
                                 </SelectContent>
                             </Select>
                         </div>
-                    </div>
-                    <div className="space-y-3">
+
                         <label className="flex items-center gap-2 text-sm cursor-pointer">
                             <input
                                 type="checkbox"
@@ -270,22 +455,19 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
                             Schedule for off-peak (next 03:30)
                         </label>
                     </div>
+
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
-                        <Button type="button" onClick={submit} disabled={lockActions}>
+                        <Button type="button" onClick={submit} disabled={lockRebuildActions}>
                             {statusLoading
                                 ? 'Checking status...'
                                 : isActiveQueue
                                   ? 'Rebuild in progress...'
-                                  : isBusy
-                                    ? 'Rebuild queued...'
-                                    : submitting
-                                      ? 'Processing...'
-                                      : scheduleOffPeak
-                                        ? 'Schedule rebuild'
-                                        : 'Rebuild now'}
+                                  : scheduleOffPeak
+                                    ? 'Schedule rebuild'
+                                    : 'Rebuild now'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -308,11 +308,11 @@ export const CustomAdminTable = ({
     };
     return (
         <>
-            <div className='flex flex-wrap items-center gap-3'>
+            <div className='flex flex-wrap items-center gap-3 justify-between'>
+               {toolbar ? <div className='flex items-center gap-2'>{toolbar}</div> : null}
                <Button type='button' onClick={openCreate} className='w-fit'>
                   {createLabel ?? 'Add new ' + modalTitle}
                </Button>
-               {toolbar ? <div className='flex items-center gap-2'>{toolbar}</div> : null}
             </div>
             <AdminTable
                 actions={actions}
