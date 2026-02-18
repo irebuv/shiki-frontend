@@ -197,7 +197,7 @@ const buildFormFields = (studioOptions: AdminFormFieldOption[]): AdminFormField[
 };
 
 const columns = [
-    { label: 'Featured Image', key: 'featured_image', isImage: true, className: 'border p-4' },
+    { label: 'Featured Image', key: 'featured_image', isImage: true, className: 'border p-4', imageHref: (row) => (row.slug ? `/anime/${row.slug}` : undefined) },
     { label: 'Product Name', key: 'name', className: 'border w-90 p-4' },
     { label: 'Description', key: 'description', className: 'border p-4 w-1/3' },
     { label: 'Rate', key: 'rating', className: 'border p-4' },
