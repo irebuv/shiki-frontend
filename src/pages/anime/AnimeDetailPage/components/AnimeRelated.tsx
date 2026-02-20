@@ -16,7 +16,7 @@ export default function AnimeRelated({ relatedItems, typeLabelMap }: AnimeRelate
     return (
         <>
             <div className={`flex items-center gap-2 ${collapsed ? 'mb-0' : 'mb-4'}`}>
-                <h3 className="text-lg font-semibold">Related:</h3>
+                <h3 className='text-xl font-semibold text-foreground'>Related</h3>
                 <Button
                     onClick={() => setCollapsed((prev) => !prev)}
                     className=" py-1.5 px-4 text-sm"

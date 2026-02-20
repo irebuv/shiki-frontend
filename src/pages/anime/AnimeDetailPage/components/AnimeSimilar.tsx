@@ -133,7 +133,7 @@ export default function AnimeSimilar({ similarItems, typeLabelMap }: AnimeSimila
     return (
         <div className="rounded-2xl bg-background-light/60 p-5 shadow-sm ring-1 ring-black/10">
             <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold">Similar:</h3>
+               <h3 className='text-xl font-semibold text-foreground'>Similar</h3>
                 <div className="flex items-center gap-2">
                     <Button onClick={goPrev} disabled={!canPrev} aria-label="Previous similar page">
                         Prev

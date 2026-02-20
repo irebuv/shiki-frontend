@@ -22,7 +22,10 @@ export default function Header() {
 
     return (
         <motion.header
-            initial={{ boxShadow: '0px 0px 0px rgba(0,0,0)', backgroundColor: 'var(--header-bg-50)' }}
+            initial={{
+                boxShadow: '0px 0px 0px rgba(0,0,0)',
+                backgroundColor: 'var(--header-bg-50)',
+            }}
             transition={{ duration: 1.35, ease: 'easeOut' }}
             animate={{
                 boxShadow: scrolled
@@ -43,7 +46,10 @@ export default function Header() {
                 {user ? (
                     <MenuHeader links={linksNavProfile} title={user.name} hasLogout={true} />
                 ) : (
-                    <Link to="/login">Login</Link>
+                    <div className='flex gap-3'>
+                        <Link to="/login">Login</Link>
+                        <Link to="/register">Sign up</Link>
+                    </div>
                 )}
             </div>
         </motion.header>

@@ -2,6 +2,8 @@ import { toast } from '@/components/custom/Sonner';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -32,23 +34,21 @@ const LoginPage = () => {
 
     return (
         <div className="flex flex-1 items-center justify-center w-full">
-            <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-lg w-96">
+            <form onSubmit={handleLogin} className="flex gap-3 flex-col bg-background p-8 rounded-2xl shadow-lg w-96">
                 <h1 className="text-2xl font-bold mb-6 text-center">Login in</h1>
-                <input
-                    className="border w-full p-2 mb-3 rounded-md"
+                <Input
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                 />
-                <input
-                    className="border w-full p-2 mb-4 rounded-md"
+                <Input
                     type="password"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <label htmlFor="rememberMe" className="cursor-pointer">
+                <Label htmlFor="rememberMe" className="cursor-pointer">
                     <input
                         type="checkbox"
                         id="rememberMe"
@@ -56,7 +56,7 @@ const LoginPage = () => {
                         onChange={(e) => setRememberMe(e.target.checked)}
                     />{' '}
                     &nbsp; Remember
-                </label>
+                </Label>
                 <button
                     className="w-full bg-blue-600 text-white py-2 mt-3 rounded-md hover:bg-blue-700"
                     type="submit"

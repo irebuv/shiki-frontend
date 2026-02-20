@@ -21,9 +21,9 @@ export default function Filter({ title, children, storageKey, defaultOpen = fals
                 <div className="flex justify-between items-center">
                     <span>{title}</span>
                     {open ? (
-                        <span className="text-red-800 text-3xl">−</span>
+                        <span className="text-red-800 dark:text-red-500 text-3xl">−</span>
                     ) : (
-                        <span className="text-green-700 text-3xl">+</span>
+                        <span className="text-green-700 dark:text-green-500 text-3xl">+</span>
                     )}
                 </div>
             </button>
