@@ -16,7 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { imageUrl } from '@/lib/imageUrl';
 import { cn } from '@/lib/utils';
 import { AnimeCommentItem, AnimeCommentUser, CommentSort, CommentVoteValue } from '@/types/comment';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type Props = {
     animeId?: number;
@@ -25,11 +25,12 @@ type Props = {
 
 type ReplyState = {
     parentId: number;
-    replyToUserid: number | null;
+    targetCommentId: number;
+    replyToUserId: number | null;
     replyToName: string;
 };
 
-const PER_PAGE = 2;
+const PER_PAGE = 10;
 
 function getErrorMessage(error: unknown, fallback: string): string {
     if (typeof error === 'object' && error !== null) {
@@ -38,14 +39,11 @@ function getErrorMessage(error: unknown, fallback: string): string {
         if (typeof msg === 'string' && msg.trim() !== '') {
             return msg;
         }
-        return fallback;
     }
+    return fallback;
 }
 
 function resolveAvatarUrl(user: AnimeCommentUser): string | undefined {
-    if (user.avatar_url && user.avatar_url.trim() !== '') {
-        return user.avatar_url;
-    }
     if (user.avatar_path && user.avatar_path.trim() !== '') {
         return imageUrl(user.avatar_path);
     }
@@ -80,6 +78,38 @@ function updateCommentInTree(
     });
 }
 
+function insertCreatedComment(
+    items: AnimeCommentItem[],
+    created: AnimeCommentItem,
+    sort: CommentSort,
+): AnimeCommentItem[] {
+    // Root comment.
+    if (created.parent_id === null) {
+        if (sort === 'new') {
+            return [created, ...items];
+        }
+        return items;
+    }
+
+    // One-level reply comment.
+    return items.map((root) => {
+        if (root.id !== created.parent_id) {
+            return root;
+        }
+
+        const exists = root.replies.some((reply) => reply.id === created.id);
+        if (exists) {
+            return root;
+        }
+
+        return {
+            ...root,
+            replies_count: root.replies_count + 1,
+            replies: [...root.replies, created],
+        };
+    });
+}
+
 export default function AnimeComments({ animeId, slug }: Props) {
     const { user } = useAuth();
 
@@ -101,6 +131,9 @@ export default function AnimeComments({ animeId, slug }: Props) {
 
     const [errorText, setErrorText] = useState<string | null>(null);
 
+    const [showJumpToFirst, setShowJumpToFirst] = useState(false);
+    const commentsBlockRef = useRef<HTMLDivElement | null>(null);
+
     const dateFormatter = useMemo(
         () =>
             new Intl.DateTimeFormat('en-EN', {
@@ -110,6 +143,7 @@ export default function AnimeComments({ animeId, slug }: Props) {
         [],
     );
 
+    // useCallback
     const formatDate = useCallback(
         (value: string | null) => {
             if (!value) return '';
@@ -160,45 +194,84 @@ export default function AnimeComments({ animeId, slug }: Props) {
     );
 
     const loadSortedKeepingOpened = useCallback(
-      async (nextSort: CommentSort) => {
-         if (!slug) return;
+        async (nextSort: CommentSort) => {
+            if (!slug) return;
 
-         const pagesToKeep = Math.max(1, page);
+            const pagesToKeep = Math.max(1, page);
 
-         setLoading(true);
-         try {
-            setErrorText(null);
+            setLoading(true);
+            try {
+                setErrorText(null);
 
-            const requests = Array.from({length: pagesToKeep}, (_, i) => 
-            
-               fetchAnimeComments({
-                  slug,
-                  page: i + 1,
-                  perPage: PER_PAGE,
-                  sort: nextSort,
-               }),
-            );
+                const requests = Array.from({ length: pagesToKeep }, (_, i) =>
+                    fetchAnimeComments({
+                        slug,
+                        page: i + 1,
+                        perPage: PER_PAGE,
+                        sort: nextSort,
+                    }),
+                );
 
-            const responses = await Promise.all(requests);
-            const merged = responses.flatMap((r) => r.data?.items ?? []);
-            const last = responses[responses.length - 1]?.data;
+                const responses = await Promise.all(requests);
+                const merged = responses.flatMap((r) => r.data?.items ?? []);
+                const last = responses[responses.length - 1]?.data;
 
-            setItems(merged);
-            setSort(nextSort);
-            setPage(pagesToKeep);
-            setHasMore(Boolean(last?.pagination.has_more));
-          
-         } catch (error) {
-            setErrorText(getErrorMessage(error, 'Failed to load comments.'));
-         } finally {
-            setLoading(false);
-         }
-      }, [slug, page]
+                setItems(merged);
+                setSort(nextSort);
+                setPage(pagesToKeep);
+                setHasMore(Boolean(last?.pagination.has_more));
+            } catch (error) {
+                setErrorText(getErrorMessage(error, 'Failed to load comments.'));
+            } finally {
+                setLoading(false);
+            }
+        },
+        [slug, page],
     );
 
+    // useEffect
     useEffect(() => {
         void loadPage(1, false, sort);
     }, [loadPage]);
+
+    // Keep floating button inside comments block bounds.
+    useEffect(() => {
+        const onScroll = () => {
+            if (items.length === 0 || !commentsBlockRef.current) {
+                setShowJumpToFirst(false);
+                return;
+            }
+
+            const rect = commentsBlockRef.current.getBoundingClientRect();
+            const scrollY = window.scrollY;
+            const blockTop = rect.top + scrollY;
+            const blockBottom = rect.bottom + scrollY;
+
+            // Show only while user is scrolling inside comments zone.
+            const shouldShow = scrollY > blockTop + 240 && scrollY < blockBottom - 120;
+
+            setShowJumpToFirst(shouldShow);
+        };
+
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
+        };
+    }, [items.length]);
+
+    const scrollToCommentsTop = useCallback(() => {
+        if (!commentsBlockRef.current) return;
+
+        // Fixed offset to avoid overlap with sticky header.
+        const targetTop = commentsBlockRef.current.getBoundingClientRect().top + window.scrollY - 90;
+        window.scrollTo({
+            top: Math.max(targetTop, 0),
+            behavior: 'smooth',
+        });
+    }, []);
 
     const resetReplyState = () => {
         setReplyState(null);
@@ -206,7 +279,7 @@ export default function AnimeComments({ animeId, slug }: Props) {
         setHasSpoiler(false);
     };
 
-    const startReply = (rootId: number, targetUser: AnimeCommentUser) => {
+    const startReply = (rootId: number, targetUser: AnimeCommentUser, targetCommentId: number) => {
         if (!user) {
             toast.error('Login required to reply.');
             return;
@@ -215,7 +288,8 @@ export default function AnimeComments({ animeId, slug }: Props) {
         const mention = `@${targetUser.name} `;
         setReplyState({
             parentId: rootId,
-            replyToUserid: targetUser.id,
+            targetCommentId,
+            replyToUserId: targetUser.id,
             replyToName: targetUser.name,
         });
 
@@ -245,19 +319,26 @@ export default function AnimeComments({ animeId, slug }: Props) {
         setSubmitting(true);
 
         try {
-            await createAnimeComment(animeId, {
+            const response = await createAnimeComment(animeId, {
                 body,
                 has_spoiler: hasSpoiler,
                 parent_id: replyState?.parentId ?? null,
-                reply_to_user_id: replyState?.replyToUserid ?? null,
+                reply_to_user_id: replyState?.replyToUserId ?? null,
             });
+            const created = response.data?.item ?? null;
 
             setDraft('');
             setHasSpoiler(false);
             resetReplyState();
 
-            // reload page 1 so order and counters stay consistent.
-            await loadPage(1, false, sort);
+            if (created) {
+                // Keep user on the same scroll position: update in-place, no full reload.
+                setItems((prev) => insertCreatedComment(prev, created, sort));
+                return;
+            }
+
+            // Fallback only when backend did not return created comment payload.
+            await loadPage(page, false, sort);
         } catch (error) {
             toast.error(getErrorMessage(error, 'Failed to send comment.'));
         } finally {
@@ -354,12 +435,16 @@ export default function AnimeComments({ animeId, slug }: Props) {
                     size="sm"
                     disabled={comment.is_deleted}
                     onClick={() =>
-                        startReply(rootId, {
-                            id: comment.user.id,
-                            name: comment.user.name,
-                            avatar_path: comment.user.avatar_path,
-                            avatar_url: comment.user.avatar_url,
-                        })
+                        startReply(
+                            rootId,
+                            {
+                                id: comment.user.id,
+                                name: comment.user.name,
+                                avatar_path: comment.user.avatar_path,
+                                avatar_url: comment.user.avatar_url,
+                            },
+                            comment.id,
+                        )
                     }
                 >
                     Reply
@@ -368,10 +453,30 @@ export default function AnimeComments({ animeId, slug }: Props) {
         );
     };
 
+    const renderInlineReplyForm = (commentId: number) => {
+        if (!user || !replyState || replyState.targetCommentId !== commentId) return null;
+        return (
+            <div className="mt-3 rounded-lg border border-border bg-background-light/40 p-3">
+                <p className="mb-2 text-sm text-muted-foreground">
+                    Replying to <strong>@{replyState.replyToName}</strong>
+                </p>
+                <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={3} />
+                <div className="mt-2 flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={resetReplyState}>
+                        Cancel
+                    </Button>
+                    <Button type="button" disabled={submitting} onClick={submitComment}>
+                        {submitting ? 'Sending...' : 'Send reply'}
+                    </Button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <section className="relative p-6">
             {loading && <LoadingOverlay />}
-            <div className='space-y-4'>
+            <div ref={commentsBlockRef} className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <h3 className="text-xl font-semibold text-foreground">Comments</h3>
 
@@ -379,9 +484,9 @@ export default function AnimeComments({ animeId, slug }: Props) {
                         <Select
                             value={sort}
                             onValueChange={(value) => {
-                              const nextSort = value as CommentSort;
-                              if (nextSort === sort) return;
-                              void loadSortedKeepingOpened(nextSort);
+                                const nextSort = value as CommentSort;
+                                if (nextSort === sort) return;
+                                void loadSortedKeepingOpened(nextSort);
                             }}
                         >
                             <SelectTrigger className="bg-chart-2 cursor-pointer">
@@ -507,6 +612,7 @@ export default function AnimeComments({ animeId, slug }: Props) {
 
                                             <div className="mt-2">{renderCommentBody(root)}</div>
                                             {renderCommentActions(root, root.id)}
+                                            {renderInlineReplyForm(root.id)}
                                         </div>
                                     </div>
 
@@ -561,6 +667,7 @@ export default function AnimeComments({ animeId, slug }: Props) {
                                                                     reply,
                                                                     root.id,
                                                                 )}
+                                                                {renderInlineReplyForm(reply.id)}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -572,18 +679,40 @@ export default function AnimeComments({ animeId, slug }: Props) {
                             );
                         })}
 
-                        {hasMore ? (
-                            <div className="flex justify-center">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={loadingMore}
-                                    onClick={() => loadPage(page + 1, true, sort)}
-                                >
-                                    {loadingMore ? 'Loading...' : 'Load more'}
-                                </Button>
+                        {hasMore || showJumpToFirst ? (
+                            // Keep both action buttons on one visual baseline.
+                            <div className="sticky bottom-4 z-40 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg px-2 py-2">
+                                <div />
+                                {hasMore ? (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-9"
+                                        disabled={loadingMore}
+                                        onClick={() => loadPage(page + 1, true, sort)}
+                                    >
+                                        {loadingMore ? 'Loading...' : 'Load more'}
+                                    </Button>
+                                ) : (
+                                    <div />
+                                )}
+                                <div className="flex justify-end">
+                                    {showJumpToFirst ? (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="solid"
+                                            className="h-9 shadow-lg bg-chart-3/50 hover:bg-chart-3/70 text-foreground"
+                                            onClick={scrollToCommentsTop}
+                                        >
+                                            To first comment
+                                        </Button>
+                                    ) : null}
+                                </div>
                             </div>
                         ) : null}
+
                     </div>
                 )}
             </div>

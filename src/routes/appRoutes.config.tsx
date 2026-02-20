@@ -5,6 +5,7 @@ import Anime from '@/pages/anime/AnimePage';
 import LoginPage from '@/pages/user/LoginPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import AnimeDetailPage from '@/pages/anime/AnimeDetailPage/AnimeDetailPage';
+import RegisterPage from '@/pages/user/RegisterPage';
 
 type NavGroup = 'main' | 'profile';
 
@@ -44,6 +45,11 @@ export const appRoutesConfig: AppRouteItem[] = [
         title: 'Login',
         path: '/login',
         element: <LoginPage />,
+    },
+    {
+      title: 'Sign up',
+      path: '/register',
+      element: <RegisterPage />
     },
     {
         title: 'Admin',
