@@ -180,8 +180,15 @@ export function AnimeSimilarRebuildPanel({ onDone }: Props) {
         if (!settingsOpen) return;
 
         const onPointerDown = (event: MouseEvent) => {
+            const target = event.target as HTMLElement | null;
+            if (!target) return;
+
+            // Radix Select renders options in portal, treat it as inside this popup.
+            if (target.closest('[data-slot="select-content"]')) return;
+
             if (!settingsRef.current) return;
-            if (settingsRef.current.contains(event.target as Node)) return;
+            if (settingsRef.current.contains(target)) return;
+
             setSettingsOpen(false);
         };
 

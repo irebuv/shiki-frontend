@@ -17,6 +17,7 @@ import { AnimeCoverCard } from './components/AnimeCoverCard';
 import { AnimePlayer } from './components/AnimePlayer';
 import AnimeRelated from './components/AnimeRelated';
 import AnimeSimilar from './components/AnimeSimilar';
+import AnimeComments from './components/AnimeComments';
 
 export default function AnimeDetailPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -122,6 +123,9 @@ export default function AnimeDetailPage() {
                         <AnimeSimilar similarItems={similarItems} typeLabelMap={typeLabelMap} />
                     </div>
                 )}
+                <div className='col-span-7 detail-block'>
+                   <AnimeComments animeId={anime?.id} slug={slug} />
+                </div>
             </div>
         </QueryState>
     );
