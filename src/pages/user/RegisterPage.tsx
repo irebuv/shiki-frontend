@@ -113,6 +113,9 @@ export default function RegisterPage() {
             await api.post('/register', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
+            
+            // create session right away
+            await login(normalizedEmail, password, false);
 
             toast.success('Account created.');
             navigate(from, { replace: true });
@@ -183,20 +186,18 @@ export default function RegisterPage() {
                     />
                 </div>
 
-                <div className='space-y-1'>
+                <div className="space-y-1">
                     <Label htmlFor="avatar">Avatar (optional)</Label>
                     <Input
                         id="avatar"
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
                         onChange={onAvatarChange}
-                        className='cursor-pointer'
+                        className="cursor-pointer"
                     />
-                    {avatar ? (
-                        <p className="text-xs text-muted-foreground">{avatar.name}</p>
-                    ) : null}
+                    {avatar ? <p className="text-xs text-muted-foreground">{avatar.name}</p> : null}
                 </div>
-                
+
                 <Button type="submit" className="mt-2 w-full" disabled={submitting}>
                     {submitting ? 'Creating account...' : 'Create account'}
                 </Button>
