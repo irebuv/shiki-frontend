@@ -22,12 +22,14 @@ const AuthContext = createContext<AuthContextType>({
     logout: () => {},
 });
 
+const TOKEN_KEY = import.meta.env.VITE_JWT_STORAGE_KEY || 'token';
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(TOKEN_KEY);
         if (!token) {
             setLoading(false);
             return;
@@ -39,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         api.get("/me")
             .then(res => setUser(res.data))
             .catch(() => {
-                localStorage.removeItem("token");
+                localStorage.removeItem(TOKEN_KEY);
                 delete api.defaults.headers.common["Authorization"];
             })
             .finally(() => setLoading(false));
@@ -48,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = async (email: string, password: string, rememberMe = false) => {
         const res = await api.post("/login", {email, password, rememberMe});
         const token = res.data.token;
-        localStorage.setItem("token", token);
+        localStorage.setItem(TOKEN_KEY, token);
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         const userRes = await api.get("/me");
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         await api.post("/logout");
-        localStorage.removeItem("token");
+        localStorage.removeItem(TOKEN_KEY);
         delete api.defaults.headers.common["Authorization"];
         setUser(null);
     }

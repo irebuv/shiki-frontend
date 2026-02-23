@@ -2,12 +2,25 @@ import { useLocation, useNavigate, useRoutes } from 'react-router-dom';
 import { toast, Toaster } from './components/custom/Sonner';
 import { useEffect, useRef } from 'react';
 import { appRoutes } from './routes/AppRoutes';
-console.log('BUILD FROM:', new Date().toISOString());
+import { initGa4, trackGa4Page } from './lib/ga4';
+
 function App() {
     const element = useRoutes(appRoutes);
     const location = useLocation();
     const navigate = useNavigate();
     const toastShownRef = useRef(false);
+    const trackedPathRef = useRef('');
+
+    useEffect(() => {
+      initGa4();
+    }, [])
+
+    useEffect(() => {
+      const path = `${location.pathname}${location.search}${location.hash}`;
+      if (trackedPathRef.current === path) return;
+      trackedPathRef.current = path;
+      trackGa4Page(path);
+    }, [location.pathname, location.search, location.hash]);
 
     useEffect(() => {
         const state = (location.state as Record<string, unknown> | undefined) ?? {};
