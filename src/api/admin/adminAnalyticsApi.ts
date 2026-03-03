@@ -1,5 +1,5 @@
 import api from '@/api/axios';
-import { AdminAnalyticsOverviewResponse } from '@/types/admin/analytics';
+import { AdminAnalyticsOverviewResponse, AdminAnalyticsRealtimeResponse } from '@/types/admin/analytics';
 
 export async function fetchAdminAnalyticsOverview(
     days = 14,
@@ -9,4 +9,9 @@ export async function fetchAdminAnalyticsOverview(
     });
 
     return data;
+}
+
+export async function fetchAdminAnalyticsRealtime(): Promise<AdminAnalyticsRealtimeResponse> {
+   const {data} = await api.get<AdminAnalyticsRealtimeResponse>('/admin/analytics/realtime');
+   return data;
 }
