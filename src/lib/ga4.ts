@@ -5,11 +5,12 @@ declare global {
    }
 }
 
+const ENABLED = String(import.meta.env.VITE_GA4_ENABLED ?? 'true') === 'true';
 const MEASUREMENT_ID = String(import.meta.env.VITE_GA4_MEASUREMENT_ID ?? '').trim();
 let initialized = false;
 
 export function initGa4(): void {
-  if (!MEASUREMENT_ID || initialized || typeof window === 'undefined') return;
+  if (!ENABLED || !MEASUREMENT_ID || initialized || typeof window === 'undefined') return;
   initialized = true;
 
   window.dataLayer = window.dataLayer || [];
@@ -31,7 +32,7 @@ export function initGa4(): void {
   document.head.appendChild(script);
 }
 export function trackGa4Page(path: string): void {
-   if (!MEASUREMENT_ID || typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  if (!ENABLED || !MEASUREMENT_ID || typeof window === 'undefined' || typeof window.gtag !== 'function') return;
 
    window.gtag('event', 'page_view', {
       page_path: path,
