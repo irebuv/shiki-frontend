@@ -1,0 +1,119 @@
+:root {
+    /* color theme variables */
+    --color-theme-duration: 12s;
+    --color-theme-animation: none;
+    --color-theme-h: 237.33;
+    --theme-preview-l: 62%;
+    --theme-preview-c: 0.16;
+
+    --bg-base: oklch(97% 0.012 232);
+    --bg-grad: oklch(92.2% 0.024 226);
+    --bg-accent: oklch(86% 0.035 214 / 0.11);
+    --bg-veil: oklch(99.2% 0.004 230 / 0.22);
+
+    --crack-overlay-l: 42.2%;
+    --crack-overlay-c: 0.048;
+    --crack-overlay-color: oklch(
+        var(--crack-overlay-l) var(--crack-overlay-c) var(--color-theme-h)
+    );
+    --crack-overlay-opacity: 1;
+    --crack-overlay-image: url('/patterns/cracks_reverse_transparency_2560x1440_light.png');
+}
+
+.dark {
+    /* color theme variables */
+    --theme-preview-l: 68%;
+    --theme-preview-c: 0.2;
+
+    --bg-base: oklch(22.6% 0.015 252);
+    --bg-grad: oklch(27.2% 0.028 246);
+    --bg-accent: oklch(40% 0.06 230 / 0.12);
+    --bg-veil: oklch(7.5% 0.008 250 / 0.24);
+
+    --crack-overlay-l: 31.59%;
+    --crack-overlay-c: 0.07705;
+    --crack-overlay-color: oklch(
+        var(--crack-overlay-l) var(--crack-overlay-c) var(--color-theme-h)
+    );
+    --crack-overlay-opacity: 0.94;
+    --crack-overlay-image: url('/patterns/cracks_reverse_transparency_2560x1440.png');
+}
+.anime-bg {
+    background:
+        radial-gradient(120% 80% at 50% 0%, var(--bg-accent), transparent 70%),
+        linear-gradient(165deg, var(--bg-base) 0%, var(--bg-grad) 58%, var(--bg-base) 100%);
+    background-attachment: fixed;
+}
+
+@keyframes theme-rainbow {
+    from {
+        filter: hue-rotate(0deg) saturate(1.15);
+    }
+    to {
+        filter: hue-rotate(360deg) saturate(1.15);
+    }
+}
+
+.crack-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--crack-overlay-opacity);
+    background:
+        var(--crack-overlay-image) center / cover no-repeat,
+        var(--crack-overlay-color);
+    mix-blend-mode: normal;
+    background-size: 110%;
+    animation: var(--color-theme-animation);
+    background-size: cover;
+    animation-delay: var(--crack-overlay-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+    .crack-overlay {
+        animation: none;
+        filter: none;
+    }
+}
+
+/* color slider */
+.theme-hue-slider {
+    appearance: none;
+    width: 100%;
+    height: 0.6rem;
+    border-radius: 9999px;
+    background: linear-gradient(
+        90deg,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 0) 0%,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 60) 17%,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 120) 33%,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 180) 50%,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 240) 67%,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 300) 83%,
+        oklch(var(--theme-preview-l) var(--theme-preview-c) 360) 100%
+    );
+    outline: none;
+}
+
+.theme-hue-color-default {
+    background: var(--color-chart-2) !important;
+}
+
+.theme-hue-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 2px solid var(--color-chart-3);
+    background: oklch(44% 0.02 250);
+    cursor: pointer;
+}
+
+.theme-hue-slider::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 2px solid var(--color-chart-3);
+    background: oklch(44% 0.02 250);
+    cursor: pointer;
+}

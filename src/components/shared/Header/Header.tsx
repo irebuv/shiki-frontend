@@ -7,6 +7,7 @@ import MenuHeader from './MenuHeader';
 import { ThemeToggle } from './ThemeToggle';
 import { linksNavMain, linksNavProfile } from '@/routes/appRoutes.config';
 import { Input } from '@/components/ui/input';
+import { ColorThemeSettingsModal } from '@/lib/theme/ColorThemeSettingsModal';
 
 export default function Header() {
     const { user, loading } = useAuth();
@@ -42,11 +43,14 @@ export default function Header() {
                 </Link>
                 <MenuHeader links={linksNavMain} />
                 <Input variant="header" placeholder="Search anime..." className="h-8" />
-                <ThemeToggle />
+                <div className="flex gap-2 items-center">
+                    <ColorThemeSettingsModal />
+                    <ThemeToggle />
+                </div>
                 {user ? (
                     <MenuHeader links={linksNavProfile} title={user.name} hasLogout={true} />
                 ) : (
-                    <div className='flex gap-3'>
+                    <div className="flex gap-3">
                         <Link to="/login">Login</Link>
                         <Link to="/register">Sign up</Link>
                     </div>

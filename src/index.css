@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import '@radix-ui/themes/styles.css';
-@import './styles/crack-background.css';
+@import './styles/color-theme-background.css';
 @font-face {
     font-family: 'DeliusRegular';
     src: url(assets/fonts/Delius-Regular.ttf);
