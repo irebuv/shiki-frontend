@@ -105,7 +105,7 @@
 
     --background: oklch(100% 0.00011 271.152);
     --foreground: oklch(14.479% 0.00002 271.152);
-    --header-bg-base: 93.5% 0.022 243.7;
+    --header-bg-base: 93.5% 0.022  var(--color-theme-h);
     --header-bg-50: oklch(var(--header-bg-base) / 0.5);
     --header-bg-100: oklch(var(--header-bg-base) / 0.95);
     --header-bg: var(--header-bg-100);
@@ -125,7 +125,7 @@
     --input-soft-focus-border: oklch(58.8% 0.158 241.966);
     --input-soft-focus-ring: oklch(58.8% 0.158 241.966 / 0.23);
 
-    --card: oklch(89.5% 0.028 236);
+    --card: oklch(89.5% 0.028  var(--color-theme-h));
     --card-foreground: oklch(0.145 0 0);
 
     --primary: oklch(0.205 0 0);
@@ -147,13 +147,13 @@
     --ring: oklch(0.708 0 0);
 
     /*---bg colors---*/
-    --background-light: oklch(97.279% 0.03496 241.708);
+    --background-light: oklch(97.279% 0.03496  var(--color-theme-h));
 
     /*---blue or purples(dark mode) colors---*/
-    --chart-1: oklch(0.588 0.243 264.376);
-    --chart-2: oklch(86.8% 0.056 232);
-    --chart-3: oklch(58.8% 0.158 241.966);
-    --chart-4: oklch(63.207% 0.20187 254.106);
+    --chart-1: oklch(0.588 0.243 var(--color-theme-h));
+    --chart-2: oklch(86.8% 0.056  var(--color-theme-h));
+    --chart-3: oklch(58.8% 0.158  var(--color-theme-h));
+    --chart-4: oklch(63.207% 0.20187  var(--color-theme-h));
     /*---grey colors---*/
     /*---dark colors---*/
     /*---white colors---*/
@@ -201,7 +201,7 @@
 .dark {
     --background: oklch(20.5% 0.018 252);
     --foreground: oklch(96.5% 0.008 255);
-    --header-bg-base: 26% 0.02 252;
+    --header-bg-base: 26% 0.02  var(--color-theme-h);
     --header-bg-50: oklch(var(--header-bg-base) / 0.35);
     --header-bg-100: oklch(var(--header-bg-base) / 0.95);
     --header-bg: var(--header-bg-100);
@@ -221,7 +221,7 @@
     --input-soft-focus-border: oklch(60% 0.14 252);
     --input-soft-focus-ring: oklch(60% 0.14 252 / 0.3);
 
-    --card: oklch(27.8% 0.015 248);
+    --card: oklch(27.8% 0.015  var(--color-theme-h));
     --card-foreground: oklch(96.5% 0.008 255);
 
     --primary: oklch(95% 0.012 255);
@@ -243,13 +243,13 @@
     --ring: oklch(66% 0.16 252);
 
     /*---bg colors---*/
-    --background-light: oklch(33% 0.03 252);
+    --background-light: oklch(33% 0.03  var(--color-theme-h));
 
     /*---blue or purples(dark mode) colors---*/
-    --chart-1: oklch(66% 0.18 252);
-    --chart-2: oklch(46.5% 0.075 236);
-    --chart-3: oklch(78% 0.12 252);
-    --chart-4: oklch(58% 0.18 248);
+    --chart-1: oklch(66% 0.18  var(--color-theme-h));
+    --chart-2: oklch(46.5% 0.075  var(--color-theme-h));
+    --chart-3: oklch(78% 0.12  var(--color-theme-h));
+    --chart-4: oklch(58% 0.18  var(--color-theme-h));
 
     --chart-5: oklch(73% 0.16 78);
     --chart-6: oklch(67% 0.14 148);
@@ -311,6 +311,9 @@
     syntax: '<number>';
     inherits: false;
     initial-value: 0;
+}
+html {
+   animation: var(--color-theme-vars-animation);
 }
 
 html::before {

@@ -18,7 +18,7 @@ import { useAppTheme } from './AppThemeProvider';
 
 const MODE_OPTIONS: Array<{ value: ColorThemeMode; label: string; description: string }> = [
     { value: 'default', label: 'Standard', description: 'Static default' },
-    { value: 'dynamic', label: 'Dynamic', description: 'Rainbow flow behavior' },
+    { value: 'dynamic', label: 'Dynamic (rainbow)', description: 'Rainbow flow behavior' },
     { value: 'manual', label: 'Manual', description: 'Static selected by slider' },
 ];
 
@@ -102,7 +102,7 @@ export function ColorThemeSettingsModal() {
             {open && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-[360px] max-w-[90vw] rounded-lg border bg-background p-3 shadow-xl">
                     <div className="mb-3">
-                        <p className="text-sm font-semibold">Color Theme Settings</p>
+                        <p className="text-sm font-semibold">Settings</p>
                         <p className="text-xs text-muted-foreground">
                             This panel is prepared for additional settings.
                         </p>
@@ -112,80 +112,76 @@ export function ColorThemeSettingsModal() {
                     <section className="space-y-3">
                         {MODE_OPTIONS.map((option) => (
                             <div key={option.value}>
-                                <label
-                                    className={cn(
-                                        'flex cursor-pointer items-start gap-3 rounded-md border p-3',
-                                        safeSettings.mode === option.value &&
-                                            'border-chart-3 bg-chart-3/10',
-                                    )}
+                                <div
+                                    className='items-start gap-3 p-1 rounded-md  shadow'
                                 >
-                                    <input
-                                        type="radio"
-                                        name="color-theme-mode"
-                                        className="mt-1"
-                                        checked={safeSettings.mode === option.value}
-                                        onChange={() => setMode(option.value)}
-                                    />
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium">{option.label}</span>
-                                        <span className="text-sm text-muted-foreground">
-                                            {option.description}
-                                        </span>
-                                    </div>
-                                </label>
-
-                                {safeSettings.mode === 'dynamic' && option.value === 'dynamic' && (
-                                    <div className="rounded-md border p-3 mt-1">
-                                        <div className="mb-2 flex items-center justify-between text-sm">
-                                            <span>
-                                                Speed: {safeSettings.dynamicDurationSec}s / cycle
-                                            </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                {MIN_DYNAMIC_DURATION_SEC}..
-                                                {MAX_DYNAMIC_DURATION_SEC}s
-                                            </span>
-                                        </div>
+                                    <label
+                                        className={cn(
+                                            'cursor-pointer flex items-start gap-3 p-4 rounded-md border bg-chart-2/10',
+                                            safeSettings.mode === option.value &&
+                                                'border-chart-2 bg-chart-2/40',
+                                        )}
+                                    >
                                         <input
-                                            type="range"
-                                            min={MIN_DYNAMIC_DURATION_SEC}
-                                            max={MAX_DYNAMIC_DURATION_SEC}
-                                            step={1}
-                                            value={safeSettings.dynamicDurationSec}
-                                            onChange={(e) =>
-                                                setDynamicSpeed(Number(e.target.value))
-                                            }
-                                            className="theme-hue-color-default theme-hue-slider"
+                                            type="radio"
+                                            name="color-theme-mode"
+                                            className="sr-only"
+                                            checked={safeSettings.mode === option.value}
+                                            onChange={() => setMode(option.value)}
                                         />
-                                    </div>
-                                )}
-
-                                {safeSettings.mode === 'manual' && option.value === 'manual' && (
-                                    <div className="rounded-md border p-3 mt-1">
-                                        <div className="mb-2 flex items-center justify-between text-sm">
-                                            <span>Hue: {Math.round(safeSettings.manualHue)}</span>
-                                            <span className="text-sm text-muted-foreground">
-                                                0...360
+                                        <div className="flex flex-col w-full">
+                                            <span className="text-sm font-medium">
+                                                {option.label}
                                             </span>
+                                            {option.value === 'dynamic' &&
+                                                safeSettings.mode === 'dynamic' && (
+                                                    <span className="text-sm text-muted-foreground">
+                                                        current speed:{' '}
+                                                        {safeSettings.dynamicDurationSec}s
+                                                    </span>
+                                                )}
                                         </div>
+                                    </label>
+                                    {safeSettings.mode === 'dynamic' &&
+                                        option.value === 'dynamic' && (
+                                            <div className="rounded-md  p-3 mt-1">
+                                                <input
+                                                    type="range"
+                                                    min={MIN_DYNAMIC_DURATION_SEC}
+                                                    max={MAX_DYNAMIC_DURATION_SEC}
+                                                    step={1}
+                                                    value={safeSettings.dynamicDurationSec}
+                                                    onChange={(e) =>
+                                                        setDynamicSpeed(Number(e.target.value))
+                                                    }
+                                                    className="theme-hue-color-default theme-hue-slider"
+                                                />
+                                            </div>
+                                        )}{' '}
+                                    {safeSettings.mode === 'manual' &&
+                                        option.value === 'manual' && (
+                                            <div className="rounded-md  p-3 mt-1">
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={360}
+                                                    step={1}
+                                                    value={safeSettings.manualHue}
+                                                    onChange={(e) =>
+                                                        setManualHue(Number(e.target.value))
+                                                    }
+                                                    className="theme-hue-slider"
+                                                />
 
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={360}
-                                            step={1}
-                                            value={safeSettings.manualHue}
-                                            onChange={(e) => setManualHue(Number(e.target.value))}
-                                            className="theme-hue-slider"
-                                        />
-
-                                        <div
+                                                {/* <div
                                             className="mt-3 h-8 rounded-md border"
                                             style={{
                                                 backgroundColor: `oklch(var(--crack-overlay-l) var(--crack-overlay-c) ${safeSettings.manualHue})`,
                                             }}
-                                        />
-                                    </div>
-                                )}
+                                        /> */}
+                                            </div>
+                                        )}
+                                </div>
                             </div>
                         ))}
                     </section>

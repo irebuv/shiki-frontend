@@ -1,10 +1,11 @@
 :root {
     /* color theme variables */
-    --color-theme-duration: 12s;
+    --color-theme-duration: 120s;
     --color-theme-animation: none;
     --color-theme-h: 237.33;
     --theme-preview-l: 62%;
     --theme-preview-c: 0.16;
+    --color-theme-vars-animation: none;
 
     --bg-base: oklch(97% 0.012 232);
     --bg-grad: oklch(92.2% 0.024 226);
@@ -43,6 +44,17 @@
         radial-gradient(120% 80% at 50% 0%, var(--bg-accent), transparent 70%),
         linear-gradient(165deg, var(--bg-base) 0%, var(--bg-grad) 58%, var(--bg-base) 100%);
     background-attachment: fixed;
+}
+
+@property --color-theme-h {
+   syntax: '<number>';
+   inherits: true;
+   initial-value: 237.44;
+}
+
+@keyframes color-theme-h-rainbow{
+   from {--color-theme-h: 0;}
+   to {--color-theme-h: 360;}
 }
 
 @keyframes theme-rainbow {
