@@ -7,8 +7,10 @@ import { AppThemeProvider } from '@/lib/theme/AppThemeProvider';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { initCrackOverlayPhase } from './lib/theme/crackOverlayPhase';
+import { initColorThemeSettings } from './lib/theme/colorThemeSettings';
 
 initCrackOverlayPhase();
+initColorThemeSettings();
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>

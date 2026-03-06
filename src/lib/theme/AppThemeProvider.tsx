@@ -19,6 +19,10 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === "light" || value === "dark" || value === "system";
+}
+
 function getSystemTheme(): ResolvedTheme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
@@ -49,21 +53,21 @@ function withThemeWaveTransitionTwoPhase(fn: () => void, e?: MouseEvent) {
     root.style.setProperty("--switch-y", "50%");
   }
 
-  // стартовый цвет = текущая тема
+  // Capture current background before the wave starts.
   const beforeBg = getComputedStyle(root).getPropertyValue("--background").trim();
   root.style.setProperty("--switch-bg", beforeBg);
 
-  // сброс
+  // Reset transition state classes.
   root.classList.remove("theme-wave-in", "theme-wave-color", "theme-wave-out");
   root.classList.add("theme-wave-active");
 
-  // важно: запускаем IN в следующем кадре, чтобы transition реально стартовал с 0%
+  // Start IN phase on next frame so transition starts from 0%.
   requestAnimationFrame(() => {
     root.classList.add("theme-wave-in");
   });
 
   window.setTimeout(() => {
-    fn(); // меняем тему под волной
+    fn(); // Apply next theme while the wave covers the viewport.
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -88,7 +92,6 @@ function withThemeWaveTransitionTwoPhase(fn: () => void, e?: MouseEvent) {
   }, IN_MS);
 }
 
-
 function applyResolvedTheme(resolved: ResolvedTheme) {
   const root = document.documentElement;
   if (resolved === "dark") root.classList.add("dark");
@@ -101,16 +104,24 @@ export function AppThemeProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [theme, setTheme] = useLocalStorage<ThemeMode>("theme", "system");
+  const [storedTheme, setStoredTheme] = useLocalStorage<ThemeMode>("theme", "system");
+  const theme: ThemeMode = isThemeMode(storedTheme) ? storedTheme : "system";
 
   const resolved: ResolvedTheme =
     theme === "system" ? getSystemTheme() : theme;
+
+  // Recover gracefully if localStorage contains an unexpected value.
+  useEffect(() => {
+    if (!isThemeMode(storedTheme)) {
+      setStoredTheme("system");
+    }
+  }, [storedTheme, setStoredTheme]);
 
   useEffect(() => {
     applyResolvedTheme(resolved);
   }, [resolved]);
 
-  // system theme change (OS)
+  // React to OS theme changes when app theme follows the system.
   useEffect(() => {
     if (theme !== "system") return;
 
@@ -125,8 +136,6 @@ export function AppThemeProvider({
     return () => media.removeEventListener("change", listener);
   }, [theme]);
 
-
-
   const value = useMemo<ThemeContextValue>(() => {
     return {
       theme,
@@ -135,11 +144,11 @@ export function AppThemeProvider({
       toggleTheme: (e) => {
         withThemeWaveTransitionTwoPhase(
           () => {
-            if (theme === "light") setTheme("dark");
-            else if (theme === "dark") setTheme("light");
+            if (theme === "light") setStoredTheme("dark");
+            else if (theme === "dark") setStoredTheme("light");
             else {
               const sys = getSystemTheme();
-              setTheme(sys === "dark" ? "light" : "dark");
+              setStoredTheme(sys === "dark" ? "light" : "dark");
             }
           },
           e?.nativeEvent
@@ -147,10 +156,10 @@ export function AppThemeProvider({
       },
 
       setTheme: (t) => {
-        withThemeWaveTransitionTwoPhase(() => setTheme(t));
+        withThemeWaveTransitionTwoPhase(() => setStoredTheme(t));
       },
     };
-  }, [theme, resolved, setTheme]);
+  }, [theme, resolved, setStoredTheme]);
 
   return (
     <ThemeContext.Provider value={value}>

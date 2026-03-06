@@ -16,7 +16,7 @@ export default function AdminHeader() {
             </Link>
             <NavLinks links={linksNavAdmin} className="mt-6" />
             <div className="mt-auto justify-between flex gap-2">
-                <Button variant="ghost" onClick={logout}>Logout</Button>
+                <Button variant="ghost" className="text-foreground" onClick={logout}>Logout</Button>
                 <ThemeToggle />
             </div>
             
