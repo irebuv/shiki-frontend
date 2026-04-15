@@ -4,6 +4,7 @@ import { AnimeRelatedItem } from '@/types/anime';
 import { capitalize } from '@/lib/stringUtils';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type AnimeRelatedProps = {
     relatedItems: AnimeRelatedItem[];
@@ -16,7 +17,7 @@ export default function AnimeRelated({ relatedItems, typeLabelMap }: AnimeRelate
     return (
         <>
             <div className={`flex items-center gap-2 ${collapsed ? 'mb-0' : 'mb-4'}`}>
-                <h3 className='text-xl font-semibold text-foreground'>Related</h3>
+                <h3 className="text-xl font-semibold text-foreground">Related</h3>
                 <Button
                     onClick={() => setCollapsed((prev) => !prev)}
                     className=" py-1.5 px-4 text-sm"
@@ -28,8 +29,10 @@ export default function AnimeRelated({ relatedItems, typeLabelMap }: AnimeRelate
             </div>
 
             <div
-                className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                    collapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                    collapsed
+                        ? 'pointer-events-none opacity-0 overflow-hidden'
+                        : 'opacity-100 overflow-visible'
                 }`}
                 style={{ gridTemplateRows: collapsed ? '0fr' : '1fr' }}
                 aria-hidden={collapsed}
@@ -92,15 +95,25 @@ export default function AnimeRelated({ relatedItems, typeLabelMap }: AnimeRelate
                                 </>
                             );
 
-                            const baseClasses =
-                                'grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-3 rounded-xl border px-3 py-2 transition-all';
+                            const baseClasses = cn(
+                                'grid',
+                                'grid-cols-[auto_auto_minmax(0,1fr)]',
+                                'items-center',
+                                'gap-3',
+                                'shadow-md',
+                                'rounded-xl',
+                                'border',
+                                'px-3',
+                                'py-2',
+                            );
 
                             if (isCurrent) {
                                 return (
                                     <div
                                         key={item.id ?? related.id}
                                         aria-current="true"
-                                        className={`${baseClasses} cursor-default border-primary/25 bg-primary/5 ring-1 ring-primary/15`}
+                                        className={`${baseClasses} cursor-default
+                                         border-chart-1/25 bg-chart-1/5 ring-1 ring-chart-1/15`}
                                     >
                                         {content}
                                     </div>
@@ -111,7 +124,9 @@ export default function AnimeRelated({ relatedItems, typeLabelMap }: AnimeRelate
                                 <Link
                                     key={item.id ?? related.id}
                                     to={`/anime/${related.slug}`}
-                                    className={`${baseClasses} group cursor-pointer border-border/70 bg-background/70 hover:border-primary/30 hover:bg-background hover:ring-1 hover:ring-primary/20`}
+                                    className={`${baseClasses} group cursor-pointer
+                                     border-border/70 bg-background/70 hover:border-primary/30
+                                      hover:bg-background hover:ring-1 hover:ring-primary/20`}
                                     title={`Open ${related.name}`}
                                 >
                                     {content}

@@ -8,7 +8,7 @@ type AppLayoutProps = {
 
 export default function MainLayout({ children, className }: AppLayoutProps) {
     return (
-        <div className="relative isolate min-h-screen text-foreground anime-bg">
+        <div className="relative isolate min-h-screen text-foreground">
             <div className="crack-overlay" aria-hidden="true" />
 
             <div className="relative z-10 flex min-h-screen flex-col">
